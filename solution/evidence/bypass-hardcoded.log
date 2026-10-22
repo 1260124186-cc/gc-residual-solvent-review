@@ -1,4 +1,23 @@
-$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-hardcoded.HBUB7f:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-bypass-hardcoded.ki1fZN:/logs harbor-gc-review-quality:98852 bash /tests/test.sh
+$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-hardcoded.5f7JM4:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-bypass-hardcoded.OdCUHf:/logs harbor-gc-review-quality:74958 bash /tests/test.sh
+Collecting pytest==8.4.1 (from -r /tests/requirements.txt (line 1))
+  Downloading pytest-8.4.1-py3-none-any.whl (365 kB)
+Collecting pytest-json-ctrf==0.3.5 (from -r /tests/requirements.txt (line 2))
+  Downloading pytest_json_ctrf-0.3.5-py3-none-any.whl (6.8 kB)
+Collecting iniconfig==2.3.1 (from -r /tests/requirements.txt (line 3))
+  Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+Collecting packaging==26.3 (from -r /tests/requirements.txt (line 4))
+  Downloading packaging-26.3-py3-none-any.whl (129 kB)
+Collecting pluggy==1.7.0 (from -r /tests/requirements.txt (line 5))
+  Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+Collecting pygments==2.21.0 (from -r /tests/requirements.txt (line 6))
+  Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 2.7 MB/s eta 0:00:00
+Installing collected packages: pygments, pluggy, packaging, iniconfig, pytest, pytest-json-ctrf
+  WARNING: The script pygmentize is installed in '/home/worker/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts py.test and pytest are installed in '/home/worker/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+Successfully installed iniconfig-2.3.1 packaging-26.3 pluggy-1.7.0 pygments-2.21.0 pytest-8.4.1 pytest-json-ctrf-0.3.5
 .............FF                                                          [100%]
 =================================== FAILURES ===================================
 _____________ test_e2e_full_sequence_matches_independent_reference _____________
@@ -66,22 +85,22 @@ ________________ test_e2e_rejects_invalid_inputs_without_report ________________
                 process = _run_cli(sequence_path, chromatogram_path, output)
 >               assert process.returncode != 0
 E               AssertionError: assert 0 != 0
-E                +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmpdc4wd1_r/missing.csv', '/workspace/data/chromatograms.csv', '/tmp/tmpdc4wd1_r/out-0.json'], returncode=0, stdout='', stderr='').returncode
+E                +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmplqapqwdl/missing.csv', '/workspace/data/chromatograms.csv', '/tmp/tmplqapqwdl/out-0.json'], returncode=0, stdout='', stderr='').returncode
 
 /tests/test_outputs.py:540: AssertionError
 =============================== warnings summary ===============================
-../usr/local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475
-  /usr/local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-5sfvjhun'
+../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-86q56cur'
     config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
 
-../usr/local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429
-  /usr/local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-tmebmzlg'
+../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-cavqnyfk'
     config.cache.set("cache/lastfailed", self.lastfailed)
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
 =========================== short test summary info ============================
 FAILED ../tests/test_outputs.py::test_e2e_full_sequence_matches_independent_reference
 FAILED ../tests/test_outputs.py::test_e2e_rejects_invalid_inputs_without_report
-2 failed, 13 passed, 2 warnings in 0.35s
+2 failed, 13 passed, 2 warnings in 0.27s
 reward=0.900000
 summary=tests=15 passed=13 failed=2

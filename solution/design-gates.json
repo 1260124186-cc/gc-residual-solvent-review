@@ -13,7 +13,7 @@
     "base_image": "python:3.12.8-slim-bookworm@sha256:2199a62885a12290dc9c5be3ca0681d367576ab7bf037da120e564723292a2f0",
     "dependencies_locked": true,
     "allow_internet": true,
-    "network_reason": "业务程序与评分只依赖Python标准库和预装pytest，但候选代理初始化需要包管理器获取curl、node、npm和ripgrep，因此保留联网开关",
+    "network_reason": "业务程序只依赖Python标准库，测试依赖由test.sh从带哈希的tests/requirements.txt临时安装；候选代理通过镜像内固定版Codex连接本地代理，因此保留联网开关",
     "architectures": [
       "amd64",
       "arm64"

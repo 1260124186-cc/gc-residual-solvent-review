@@ -33,7 +33,6 @@ RUN npm install --registry=https://registry.npmmirror.com -g @openai/codex@0.163
     && ln -sf /opt/node/bin/npm /usr/local/bin/npm \
     && ln -sf /opt/node/bin/codex /usr/local/bin/codex
 
-RUN pip install --no-cache-dir pytest==8.4.1 pytest-json-ctrf==0.3.5
 RUN find /usr/local/lib/python3.12 -type f -name '*.pyc' -delete \
     && find /usr/local/lib/python3.12 -type d -name '__pycache__' -empty -delete
 

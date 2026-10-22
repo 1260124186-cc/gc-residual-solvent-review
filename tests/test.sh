@@ -12,6 +12,12 @@ write_reward_zero() {
 
 trap 'write_reward_zero; exit 130' INT TERM HUP
 
+if ! python -m pip install --user --no-cache-dir --disable-pip-version-check \
+  --require-hashes --only-binary=:all: -r /tests/requirements.txt; then
+  write_reward_zero
+  exit 0
+fi
+
 cd /workspace
 python -m pytest --ctrf "$ctrf_file" /tests/test_outputs.py -q
 
