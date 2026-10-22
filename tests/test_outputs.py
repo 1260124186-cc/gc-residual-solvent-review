@@ -31,6 +31,7 @@ DATA = Path("/workspace/data")
 
 
 def _reference_anchor(times, signals, bounds):
+    """Return the anchor midpoint and mean signal."""
     selected = [
         signal
         for time, signal in zip(times, signals, strict=True)
@@ -42,10 +43,12 @@ def _reference_anchor(times, signals, bounds):
 
 
 def _reference_integrate(times, signals, window):
+    """Integrate a peak using an independent linear baseline."""
     start = _reference_anchor(times, signals, window.pre_anchor)
     end = _reference_anchor(times, signals, window.post_anchor)
 
     def baseline(time):
+        """Interpolate the local baseline between the two anchors."""
         fraction = (time - start[0]) / (end[0] - start[0])
         return start[1] + fraction * (end[1] - start[1])
 
@@ -67,6 +70,7 @@ def _reference_integrate(times, signals, window):
 
 
 def _reference_calibration(points):
+    """Fit an independent weighted calibration line."""
     ordered = sorted(points, key=lambda item: float(item["nominal_mg_l"]))
     xs = [float(item["nominal_mg_l"]) for item in ordered]
     ys = [float(item["response_ratio"]) for item in ordered]
@@ -115,6 +119,7 @@ def _reference_calibration(points):
 
 
 def _load_trace(run_id):
+    """Load one run's time and signal arrays."""
     times = []
     signals = []
     with (DATA / "chromatograms.csv").open(newline="", encoding="utf-8") as handle:
@@ -128,11 +133,13 @@ def _load_trace(run_id):
 
 
 def _load_sequence():
+    """Load the sequence rows."""
     with (DATA / "sequence.csv").open(newline="", encoding="utf-8") as handle:
         return list(csv.DictReader(handle))
 
 
 def _reference_report():
+    """Build an independent reference report."""
     rows = _load_sequence()
     ratios = {}
     for row in rows:
@@ -246,6 +253,7 @@ def _reference_report():
 
 
 def _run_cli(sequence_path, chromatogram_path, output_path):
+    """Run the GC review CLI in a subprocess."""
     return subprocess.run(
         [
             sys.executable,
@@ -262,12 +270,6 @@ def _run_cli(sequence_path, chromatogram_path, output_path):
     )
 
 
-def _close(actual, expected, rel_tol=1e-9, abs_tol=1e-12):
-    return math.isfinite(actual) and math.isclose(
-        actual, expected, rel_tol=rel_tol, abs_tol=abs_tol
-    )
-
-
 def test_c1_linear_baseline_is_removed():
     """Remove a sloped local baseline before measuring analyte area."""
     times = [float(index) for index in range(11)]
@@ -276,9 +278,13 @@ def test_c1_linear_baseline_is_removed():
     window = PeakWindow((3.0, 7.0), (0.0, 2.0), (8.0, 10.0))
     actual = integrate_peak(times, signals, window)
     expected = _reference_integrate(times, signals, window)
-    assert _close(float(actual["area"]), expected["area"])
-    assert _close(float(actual["baseline_start_mv"]), expected["baseline_start_mv"])
-    assert _close(float(actual["baseline_end_mv"]), expected["baseline_end_mv"])
+    assert float(actual["area"]) == pytest.approx(expected["area"], rel=1e-9, abs=1e-12)
+    assert float(actual["baseline_start_mv"]) == pytest.approx(
+        expected["baseline_start_mv"], rel=1e-9, abs=1e-12
+    )
+    assert float(actual["baseline_end_mv"]) == pytest.approx(
+        expected["baseline_end_mv"], rel=1e-9, abs=1e-12
+    )
 
 
 def test_c1_trapezoid_peak_area_matches_reference():
@@ -292,7 +298,7 @@ def test_c1_trapezoid_peak_area_matches_reference():
     ]
     actual = integrate_peak(times, signals, ANALYTE_WINDOW)
     expected = _reference_integrate(times, signals, ANALYTE_WINDOW)
-    assert _close(float(actual["area"]), expected["area"])
+    assert float(actual["area"]) == pytest.approx(expected["area"], rel=1e-9, abs=1e-12)
     assert actual["points"] == expected["points"]
 
 
@@ -303,9 +309,15 @@ def test_c1_analyte_and_internal_standard_use_distinct_windows():
     internal = _reference_integrate(times, signals, INTERNAL_STANDARD_WINDOW)
     actual_analyte = integrate_peak(times, signals, ANALYTE_WINDOW)
     actual_internal = integrate_peak(times, signals, INTERNAL_STANDARD_WINDOW)
-    assert _close(float(actual_analyte["area"]), analyte["area"], rel_tol=1e-10)
-    assert _close(float(actual_internal["area"]), internal["area"], rel_tol=1e-10)
-    assert not _close(float(actual_analyte["area"]), float(actual_internal["area"]))
+    assert float(actual_analyte["area"]) == pytest.approx(
+        analyte["area"], rel=1e-10, abs=1e-12
+    )
+    assert float(actual_internal["area"]) == pytest.approx(
+        internal["area"], rel=1e-10, abs=1e-12
+    )
+    assert float(actual_analyte["area"]) != pytest.approx(
+        float(actual_internal["area"]), rel=1e-9, abs=1e-12
+    )
 
 
 def test_c1_rejects_nonmonotonic_trace():
@@ -337,8 +349,10 @@ def test_c2_weighted_least_squares_parameters():
     ]
     expected = _reference_calibration(points)
     actual = weighted_calibration(points)
-    assert _close(float(actual["slope"]), expected["slope"])
-    assert _close(float(actual["intercept"]), expected["intercept"])
+    assert float(actual["slope"]) == pytest.approx(expected["slope"], rel=1e-9, abs=1e-12)
+    assert float(actual["intercept"]) == pytest.approx(
+        expected["intercept"], rel=1e-9, abs=1e-12
+    )
 
 
 def test_c2_weighted_r2_uses_weighted_mean():
@@ -352,7 +366,9 @@ def test_c2_weighted_r2_uses_weighted_mean():
     ]
     expected = _reference_calibration(points)
     actual = weighted_calibration(points)
-    assert _close(float(actual["weighted_r2"]), expected["weighted_r2"])
+    assert float(actual["weighted_r2"]) == pytest.approx(
+        expected["weighted_r2"], rel=1e-9, abs=1e-12
+    )
 
 
 def test_c2_standard_recovery_acceptance_rules():
@@ -376,7 +392,9 @@ def test_c2_standard_recovery_acceptance_rules():
         for item in bad["standards"]
         if item["nominal_mg_l"] == 1.0
     )
-    assert _close(low_recovery, expected_bad["recoveries"][0])
+    assert low_recovery == pytest.approx(
+        expected_bad["recoveries"][0], rel=1e-9, abs=1e-12
+    )
 
 
 def test_c2_lod_and_loq_use_weighted_residual_error():
@@ -390,31 +408,41 @@ def test_c2_lod_and_loq_use_weighted_residual_error():
     ]
     expected = _reference_calibration(points)
     actual = weighted_calibration(points)
-    assert _close(float(actual["sdyx"]), expected["sdyx"])
-    assert _close(float(actual["lod_mg_l"]), expected["lod_mg_l"])
-    assert _close(float(actual["loq_mg_l"]), expected["loq_mg_l"])
+    assert float(actual["sdyx"]) == pytest.approx(expected["sdyx"], rel=1e-9, abs=1e-12)
+    assert float(actual["lod_mg_l"]) == pytest.approx(
+        expected["lod_mg_l"], rel=1e-9, abs=1e-12
+    )
+    assert float(actual["loq_mg_l"]) == pytest.approx(
+        expected["loq_mg_l"], rel=1e-9, abs=1e-12
+    )
 
 
 def test_c3_dilution_and_blank_correction_are_applied():
     """Apply dilution and blank subtraction in the final concentration."""
     calibration = {"slope": 2.0, "intercept": 0.1}
     actual = corrected_concentration(1.1, 10.0, calibration, 0.2)
-    assert _close(actual, 4.8)
+    assert actual == pytest.approx(4.8, rel=1e-9, abs=1e-12)
     assert corrected_concentration(0.1, 10.0, calibration, 0.2) == 0.0
 
 
 def test_c3_duplicate_rpd_boundary():
     """Calculate duplicate disagreement at and beyond the limit."""
     values = [100.0, 110.5263157894737]
-    assert _close(relative_percent_difference(values), 10.0, rel_tol=1e-12)
+    assert relative_percent_difference(values) == pytest.approx(
+        10.0, rel=1e-12, abs=1e-12
+    )
     assert relative_percent_difference([0.0, 0.0]) == 0.0
     assert relative_percent_difference([100.0, 112.0]) > 10.0
 
 
 def test_c3_spike_recovery_formula_and_boundaries():
     """Check spike recovery at both acceptance boundaries."""
-    assert _close(spike_recovery_percent(18.0, 10.0, 10.0), 80.0)
-    assert _close(spike_recovery_percent(22.0, 10.0, 10.0), 120.0)
+    assert spike_recovery_percent(18.0, 10.0, 10.0) == pytest.approx(
+        80.0, rel=1e-9, abs=1e-12
+    )
+    assert spike_recovery_percent(22.0, 10.0, 10.0) == pytest.approx(
+        120.0, rel=1e-9, abs=1e-12
+    )
     assert spike_recovery_percent(17.9, 10.0, 10.0) < 80.0
 
 
@@ -579,32 +607,45 @@ def _invalid_input_cases(root):
     }
 
 
-def _assert_rejected(bad_input):
-    """Verify the selected invalid input fails without a partial report."""
-    with tempfile.TemporaryDirectory() as directory:
-        root = Path(directory)
-        sequence_path, chromatogram_path = _invalid_input_cases(root)[bad_input]
-        output = root / "report.json"
-        process = _run_cli(sequence_path, chromatogram_path, output)
-        assert process.returncode != 0, bad_input
-        assert not output.exists(), bad_input
-
-
 def test_e2e_rejects_missing_column_without_report():
     """Reject a missing sequence field without writing a report."""
-    _assert_rejected("missing-column")
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        sequence_path, chromatogram_path = _invalid_input_cases(root)["missing-column"]
+        output = root / "report.json"
+        process = _run_cli(sequence_path, chromatogram_path, output)
+        assert process.returncode != 0
+        assert not output.exists()
 
 
 def test_e2e_rejects_non_numeric_field_without_report():
     """Reject a nonnumeric sequence value without writing a report."""
-    _assert_rejected("non-numeric")
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        sequence_path, chromatogram_path = _invalid_input_cases(root)["non-numeric"]
+        output = root / "report.json"
+        process = _run_cli(sequence_path, chromatogram_path, output)
+        assert process.returncode != 0
+        assert not output.exists()
 
 
 def test_e2e_rejects_duplicate_run_without_report():
     """Reject a repeated injection ID without writing a report."""
-    _assert_rejected("duplicate")
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        sequence_path, chromatogram_path = _invalid_input_cases(root)["duplicate"]
+        output = root / "report.json"
+        process = _run_cli(sequence_path, chromatogram_path, output)
+        assert process.returncode != 0
+        assert not output.exists()
 
 
 def test_e2e_rejects_trace_mismatch_without_report():
     """Reject unmatched chromatogram IDs without writing a report."""
-    _assert_rejected("trace-mismatch")
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        sequence_path, chromatogram_path = _invalid_input_cases(root)["trace-mismatch"]
+        output = root / "report.json"
+        process = _run_cli(sequence_path, chromatogram_path, output)
+        assert process.returncode != 0
+        assert not output.exists()

@@ -1,4 +1,4 @@
-$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-c2.LpRBiM:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-partial-c2.Z9VDaQ:/logs harbor-gc-review-quality:83476 bash /tests/test.sh
+$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-c2.IikjRr:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-partial-c2.djGR0c:/logs harbor-gc-review-quality:3255 bash /tests/test.sh
 Collecting pytest==8.4.1 (from -r /tests/requirements.txt (line 1))
   Downloading pytest-8.4.1-py3-none-any.whl (365 kB)
 Collecting pytest-json-ctrf==0.3.5 (from -r /tests/requirements.txt (line 2))
@@ -11,7 +11,7 @@ Collecting pluggy==1.7.0 (from -r /tests/requirements.txt (line 5))
   Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
 Collecting pygments==2.21.0 (from -r /tests/requirements.txt (line 6))
   Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 4.1 MB/s eta 0:00:00
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 696.5 kB/s eta 0:00:00
 Installing collected packages: pygments, pluggy, packaging, iniconfig, pytest, pytest-json-ctrf
   WARNING: The script pygmentize is installed in '/home/worker/.local/bin' which is not on PATH.
   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
@@ -30,12 +30,14 @@ ______________________ test_c1_linear_baseline_is_removed ______________________
         window = PeakWindow((3.0, 7.0), (0.0, 2.0), (8.0, 10.0))
         actual = integrate_peak(times, signals, window)
         expected = _reference_integrate(times, signals, window)
->       assert _close(float(actual["area"]), expected["area"])
-E       assert False
-E        +  where False = _close(21.0, 3.0)
-E        +    where 21.0 = float(21.0)
+>       assert float(actual["area"]) == pytest.approx(expected["area"], rel=1e-9, abs=1e-12)
+E       assert 21.0 == 3.0 ± 3.0e-09
+E         
+E         comparison failed
+E         Obtained: 21.0
+E         Expected: 3.0 ± 3.0e-09
 
-/tests/test_outputs.py:279: AssertionError
+/tests/test_outputs.py:281: AssertionError
 ________________ test_c1_trapezoid_peak_area_matches_reference _________________
 
     def test_c1_trapezoid_peak_area_matches_reference():
@@ -49,12 +51,14 @@ ________________ test_c1_trapezoid_peak_area_matches_reference _________________
         ]
         actual = integrate_peak(times, signals, ANALYTE_WINDOW)
         expected = _reference_integrate(times, signals, ANALYTE_WINDOW)
->       assert _close(float(actual["area"]), expected["area"])
-E       assert False
-E        +  where False = _close(9.845390224087854, 3.2485902240878586)
-E        +    where 9.845390224087854 = float(9.845390224087854)
+>       assert float(actual["area"]) == pytest.approx(expected["area"], rel=1e-9, abs=1e-12)
+E       assert 9.845390224087854 == 3.2485902240878586 ± 3.2e-09
+E         
+E         comparison failed
+E         Obtained: 9.845390224087854
+E         Expected: 3.2485902240878586 ± 3.2e-09
 
-/tests/test_outputs.py:295: AssertionError
+/tests/test_outputs.py:301: AssertionError
 __________ test_c1_analyte_and_internal_standard_use_distinct_windows __________
 
     def test_c1_analyte_and_internal_standard_use_distinct_windows():
@@ -64,12 +68,16 @@ __________ test_c1_analyte_and_internal_standard_use_distinct_windows __________
         internal = _reference_integrate(times, signals, INTERNAL_STANDARD_WINDOW)
         actual_analyte = integrate_peak(times, signals, ANALYTE_WINDOW)
         actual_internal = integrate_peak(times, signals, INTERNAL_STANDARD_WINDOW)
->       assert _close(float(actual_analyte["area"]), analyte["area"], rel_tol=1e-10)
-E       assert False
-E        +  where False = _close(1970.0561063, 1965.2149679, rel_tol=1e-10)
-E        +    where 1970.0561063 = float(1970.0561063)
+>       assert float(actual_analyte["area"]) == pytest.approx(
+            analyte["area"], rel=1e-10, abs=1e-12
+        )
+E       assert 1970.0561063 == 1965.2149679 ± 2.0e-07
+E         
+E         comparison failed
+E         Obtained: 1970.0561063
+E         Expected: 1965.2149679 ± 2.0e-07
 
-/tests/test_outputs.py:306: AssertionError
+/tests/test_outputs.py:312: AssertionError
 ______________________ test_c1_rejects_incomplete_window _______________________
 
     def test_c1_rejects_incomplete_window():
@@ -78,18 +86,21 @@ ______________________ test_c1_rejects_incomplete_window _______________________
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 E       Failed: DID NOT RAISE <class 'ValueError'>
 
-/tests/test_outputs.py:319: Failed
+/tests/test_outputs.py:331: Failed
 ______________ test_c3_dilution_and_blank_correction_are_applied _______________
 
     def test_c3_dilution_and_blank_correction_are_applied():
         """Apply dilution and blank subtraction in the final concentration."""
         calibration = {"slope": 2.0, "intercept": 0.1}
         actual = corrected_concentration(1.1, 10.0, calibration, 0.2)
->       assert _close(actual, 4.8)
-E       assert False
-E        +  where False = _close(0.3, 4.8)
+>       assert actual == pytest.approx(4.8, rel=1e-9, abs=1e-12)
+E       assert 0.3 == 4.8 ± 4.8e-09
+E         
+E         comparison failed
+E         Obtained: 0.3
+E         Expected: 4.8 ± 4.8e-09
 
-/tests/test_outputs.py:402: AssertionError
+/tests/test_outputs.py:424: AssertionError
 ______________________ test_c3_sample_status_propagation _______________________
 
     def test_c3_sample_status_propagation():
@@ -129,7 +140,7 @@ ______________________ test_c3_sample_status_propagation _______________________
                ^^^^^^^^^^^^^^^^^
 E       KeyError: 'samples'
 
-/tests/test_outputs.py:454: KeyError
+/tests/test_outputs.py:482: KeyError
 __________________ test_e2e_report_schema_and_summary_values ___________________
 
     def test_e2e_report_schema_and_summary_values():
@@ -166,7 +177,7 @@ E
 E         - below_loq
 E         + pass
 
-/tests/test_outputs.py:489: AssertionError
+/tests/test_outputs.py:517: AssertionError
 _____________ test_e2e_full_sequence_matches_independent_reference _____________
 
     def test_e2e_full_sequence_matches_independent_reference():
@@ -203,14 +214,14 @@ E         intercept   | 0.036541259041334984  | 0.029818933537394843 ± 3.0e-10 
 E         
 E         ...Full output truncated (4 lines hidden), use '-vv' to show
 
-/tests/test_outputs.py:514: AssertionError
+/tests/test_outputs.py:542: AssertionError
 =============================== warnings summary ===============================
 ../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475
-  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-rvbvwwnt'
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-h9jphqma'
     config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
 
 ../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429
-  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-jegqazdy'
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-hpxs_n5s'
     config.cache.set("cache/lastfailed", self.lastfailed)
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
@@ -223,6 +234,6 @@ FAILED ../tests/test_outputs.py::test_c3_dilution_and_blank_correction_are_appli
 FAILED ../tests/test_outputs.py::test_c3_sample_status_propagation - KeyError...
 FAILED ../tests/test_outputs.py::test_e2e_report_schema_and_summary_values - ...
 FAILED ../tests/test_outputs.py::test_e2e_full_sequence_matches_independent_reference
-8 failed, 12 passed, 2 warnings in 1.05s
+8 failed, 12 passed, 2 warnings in 0.69s
 reward=0.300000
 summary=tests=20 passed=12 failed=8
