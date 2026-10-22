@@ -22,6 +22,6 @@ timeout_sec = 300
 
 [metadata]
 difficulty = "expert"
-category = "D-化学与材料"
+category = "D.7 化学与材料 (Chemistry)"
 tags = ["Python", "气相色谱", "残留溶剂", "加权最小二乘", "实验室质量审核"]
 expert_time_estimate = "4h"

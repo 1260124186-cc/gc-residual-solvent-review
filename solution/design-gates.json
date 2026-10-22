@@ -1,6 +1,6 @@
 {
   "name": "gc-residual-solvent-review",
-  "category": "D-化学与材料",
+  "category": "D.7 化学与材料 (Chemistry)",
   "scene": "药物中间体顶空气相色谱残留溶剂乙酸乙酯的序列审核与放行计算",
   "core_task": "从GC-FID色谱序列中提取目标物和内标峰面积，完成内标加权校准、空白与稀释校正、平行样及加标回收判定，输出结构化审核报告",
   "data_provenance": {

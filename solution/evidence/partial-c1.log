@@ -1,4 +1,4 @@
-$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-c1.Igv99p:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-partial-c1.hYh49I:/logs harbor-gc-review-quality:74958 bash /tests/test.sh
+$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-c1.u45rxt:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-partial-c1.DcuMXx:/logs harbor-gc-review-quality:83476 bash /tests/test.sh
 Collecting pytest==8.4.1 (from -r /tests/requirements.txt (line 1))
   Downloading pytest-8.4.1-py3-none-any.whl (365 kB)
 Collecting pytest-json-ctrf==0.3.5 (from -r /tests/requirements.txt (line 2))
@@ -11,18 +11,19 @@ Collecting pluggy==1.7.0 (from -r /tests/requirements.txt (line 5))
   Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
 Collecting pygments==2.21.0 (from -r /tests/requirements.txt (line 6))
   Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 380.3 kB/s eta 0:00:00
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 3.2 MB/s eta 0:00:00
 Installing collected packages: pygments, pluggy, packaging, iniconfig, pytest, pytest-json-ctrf
   WARNING: The script pygmentize is installed in '/home/worker/.local/bin' which is not on PATH.
   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
   WARNING: The scripts py.test and pytest are installed in '/home/worker/.local/bin' which is not on PATH.
   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
 Successfully installed iniconfig-2.3.1 packaging-26.3 pluggy-1.7.0 pygments-2.21.0 pytest-8.4.1 pytest-json-ctrf-0.3.5
-....FFFFF..FFFF                                                          [100%]
+......FFFFF..FFF..F.                                                     [100%]
 =================================== FAILURES ===================================
 __________________ test_c2_weighted_least_squares_parameters ___________________
 
     def test_c2_weighted_least_squares_parameters():
+        """Calculate the independent 1/x-squared weighted line parameters."""
         points = [
             {"nominal_mg_l": 1.0, "response_ratio": 0.734},
             {"nominal_mg_l": 2.0, "response_ratio": 1.428},
@@ -37,10 +38,11 @@ E       assert False
 E        +  where False = _close(0.7001935483870967, 0.6998437499999999)
 E        +    where 0.7001935483870967 = float(0.7001935483870967)
 
-/tests/test_outputs.py:325: AssertionError
+/tests/test_outputs.py:340: AssertionError
 ____________________ test_c2_weighted_r2_uses_weighted_mean ____________________
 
     def test_c2_weighted_r2_uses_weighted_mean():
+        """Use the weighted response mean when computing fit quality."""
         points = [
             {"nominal_mg_l": 1.0, "response_ratio": 0.741},
             {"nominal_mg_l": 2.0, "response_ratio": 1.415},
@@ -55,10 +57,11 @@ E       assert False
 E        +  where False = _close(0.9999903379641836, 0.9998803075397891)
 E        +    where 0.9999903379641836 = float(0.9999903379641836)
 
-/tests/test_outputs.py:339: AssertionError
+/tests/test_outputs.py:355: AssertionError
 __________________ test_c2_standard_recovery_acceptance_rules __________________
 
     def test_c2_standard_recovery_acceptance_rules():
+        """Apply the distinct low-standard and remaining-standard limits."""
         points = [
             {"nominal_mg_l": 1.0, "response_ratio": 0.73},
             {"nominal_mg_l": 2.0, "response_ratio": 1.43},
@@ -75,10 +78,11 @@ __________________ test_c2_standard_recovery_acceptance_rules __________________
 >       assert bad["accepted"] is False
 E       assert True is False
 
-/tests/test_outputs.py:356: AssertionError
+/tests/test_outputs.py:373: AssertionError
 _______________ test_c2_lod_and_loq_use_weighted_residual_error ________________
 
     def test_c2_lod_and_loq_use_weighted_residual_error():
+        """Calculate detection limits from weighted residual error."""
         points = [
             {"nominal_mg_l": 1.0, "response_ratio": 0.71},
             {"nominal_mg_l": 2.0, "response_ratio": 1.46},
@@ -93,20 +97,22 @@ E       assert False
 E        +  where False = _close(0.04212968542803569, 0.012569141216960683)
 E        +    where 0.04212968542803569 = float(0.04212968542803569)
 
-/tests/test_outputs.py:375: AssertionError
+/tests/test_outputs.py:393: AssertionError
 ______________ test_c3_dilution_and_blank_correction_are_applied _______________
 
     def test_c3_dilution_and_blank_correction_are_applied():
+        """Apply dilution and blank subtraction in the final concentration."""
         calibration = {"slope": 2.0, "intercept": 0.1}
         actual = corrected_concentration(1.1, 10.0, calibration, 0.2)
 >       assert _close(actual, 4.8)
 E       assert False
 E        +  where False = _close(0.3, 4.8)
 
-/tests/test_outputs.py:383: AssertionError
+/tests/test_outputs.py:402: AssertionError
 ______________________ test_c3_sample_status_propagation _______________________
 
     def test_c3_sample_status_propagation():
+        """Propagate sample failures into QC and overall release status."""
         calibration = {
             "slope": 1.0,
             "intercept": 0.0,
@@ -142,10 +148,11 @@ ______________________ test_c3_sample_status_propagation _______________________
                ^^^^^^^^^^^^^^^^^
 E       KeyError: 'samples'
 
-/tests/test_outputs.py:432: KeyError
+/tests/test_outputs.py:454: KeyError
 __________________ test_e2e_report_schema_and_summary_values ___________________
 
     def test_e2e_report_schema_and_summary_values():
+        """Emit a complete report with the expected sample decisions."""
         reference = _reference_report()
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "report.json"
@@ -178,82 +185,75 @@ E
 E         - below_loq
 E         + pass
 
-/tests/test_outputs.py:466: AssertionError
+/tests/test_outputs.py:489: AssertionError
 _____________ test_e2e_full_sequence_matches_independent_reference _____________
 
     def test_e2e_full_sequence_matches_independent_reference():
+        """Match independent calculations across the complete GC sequence."""
         expected = _reference_report()
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "report.json"
             process = _run_cli(DATA / "sequence.csv", DATA / "chromatograms.csv", output)
             actual = json.loads(output.read_text(encoding="utf-8"))
         assert process.returncode == 0
-        for key in (
+        calibration_keys = (
             "slope",
             "intercept",
             "weighted_r2",
             "sdyx",
             "lod_mg_l",
             "loq_mg_l",
-        ):
->           assert _close(float(actual["calibration"][key]), expected["calibration"][key], rel_tol=1e-8)
-E           assert False
-E            +  where False = _close(0.7002294114715107, 0.70013853923367, rel_tol=1e-08)
-E            +    where 0.7002294114715107 = float(0.7002294114715107)
+        )
+        actual_calibration = {
+            key: float(actual["calibration"][key]) for key in calibration_keys
+        }
+        expected_calibration = {
+            key: expected["calibration"][key] for key in calibration_keys
+        }
+>       assert actual_calibration == pytest.approx(expected_calibration, rel=1e-8, abs=1e-12)
+E       AssertionError: assert {'intercept':...15449216, ...} == approx({'slop...79 ± 1.9e-11})
+E         
+E         comparison failed. Mismatched elements: 6 / 6:
+E         Max absolute difference: 0.0017770584801184099
+E         Max relative difference: 0.9307637067065712
+E         Index       | Obtained              | Expected                        
+E         slope       | 0.7002294114715107    | 0.70013853923367 ± 7.0e-09      
+E         intercept   | 0.029487266600146     | 0.029818933537394843 ± 3.0e-10  ...
+E         
+E         ...Full output truncated (4 lines hidden), use '-vv' to show
 
-/tests/test_outputs.py:484: AssertionError
-________________ test_e2e_rejects_invalid_inputs_without_report ________________
+/tests/test_outputs.py:514: AssertionError
+________________ test_e2e_rejects_duplicate_run_without_report _________________
 
-    def test_e2e_rejects_invalid_inputs_without_report():
+    def test_e2e_rejects_duplicate_run_without_report():
+        """Reject a repeated injection ID without writing a report."""
+>       _assert_rejected("duplicate")
+
+/tests/test_outputs.py:605: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+bad_input = 'duplicate'
+
+    def _assert_rejected(bad_input):
+        """Verify the selected invalid input fails without a partial report."""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            source_sequence = (DATA / "sequence.csv").read_text(encoding="utf-8")
-            source_chromatograms = (DATA / "chromatograms.csv").read_text(encoding="utf-8")
-    
-            missing_column = root / "missing.csv"
-            lines = source_sequence.splitlines()
-            missing_column.write_text(
-                "\n".join(line.rsplit(",", 1)[0] for line in lines) + "\n",
-                encoding="utf-8",
-            )
-            non_numeric = root / "bad_number.csv"
-            non_numeric.write_text(
-                source_sequence.replace(",1.0,1.0,", ",1.0,not-a-number,", 1),
-                encoding="utf-8",
-            )
-            duplicate = root / "duplicate.csv"
-            duplicate_lines = source_sequence.splitlines()
-            duplicate_lines[2] = duplicate_lines[1]
-            duplicate.write_text("\n".join(duplicate_lines) + "\n", encoding="utf-8")
-            mismatch = root / "mismatch.csv"
-            mismatch_chromatograms = root / "mismatch_chrom.csv"
-            mismatch_chromatograms.write_text(
-                source_chromatograms.replace("S1-R1", "UNKNOWN", 196),
-                encoding="utf-8",
-            )
-            mismatch.write_text(source_sequence, encoding="utf-8")
-    
-            cases = [
-                (missing_column, DATA / "chromatograms.csv"),
-                (non_numeric, DATA / "chromatograms.csv"),
-                (duplicate, DATA / "chromatograms.csv"),
-                (mismatch, mismatch_chromatograms),
-            ]
-            for index, (sequence_path, chromatogram_path) in enumerate(cases):
-                output = root / f"out-{index}.json"
-                process = _run_cli(sequence_path, chromatogram_path, output)
->               assert process.returncode != 0
-E               AssertionError: assert 0 != 0
-E                +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmpuqxybqhl/duplicate.csv', '/workspace/data/chromatograms.csv', '/tmp/tmpuqxybqhl/out-2.json'], returncode=0, stdout='', stderr='').returncode
+            sequence_path, chromatogram_path = _invalid_input_cases(root)[bad_input]
+            output = root / "report.json"
+            process = _run_cli(sequence_path, chromatogram_path, output)
+>           assert process.returncode != 0, bad_input
+E           AssertionError: duplicate
+E           assert 0 != 0
+E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmppkrexio5/duplicate.csv', '/workspace/data/chromatograms.csv', '/tmp/tmppkrexio5/report.json'], returncode=0, stdout='', stderr='').returncode
 
-/tests/test_outputs.py:540: AssertionError
+/tests/test_outputs.py:589: AssertionError
 =============================== warnings summary ===============================
 ../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475
-  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-u0b5ejsr'
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-xvrlx_jp'
     config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
 
 ../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429
-  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-y193k76g'
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-gy4qikdn'
     config.cache.set("cache/lastfailed", self.lastfailed)
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
@@ -266,7 +266,7 @@ FAILED ../tests/test_outputs.py::test_c3_dilution_and_blank_correction_are_appli
 FAILED ../tests/test_outputs.py::test_c3_sample_status_propagation - KeyError...
 FAILED ../tests/test_outputs.py::test_e2e_report_schema_and_summary_values - ...
 FAILED ../tests/test_outputs.py::test_e2e_full_sequence_matches_independent_reference
-FAILED ../tests/test_outputs.py::test_e2e_rejects_invalid_inputs_without_report
-9 failed, 6 passed, 2 warnings in 0.84s
+FAILED ../tests/test_outputs.py::test_e2e_rejects_duplicate_run_without_report
+9 failed, 11 passed, 2 warnings in 2.68s
 reward=0.300000
-summary=tests=15 passed=6 failed=9
+summary=tests=20 passed=11 failed=9

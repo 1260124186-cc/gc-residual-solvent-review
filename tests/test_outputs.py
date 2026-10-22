@@ -1,3 +1,5 @@
+"""Check GC integration, calibration, sample QC, and report validation."""
+
 import csv
 import json
 import math
@@ -31,7 +33,7 @@ DATA = Path("/workspace/data")
 def _reference_anchor(times, signals, bounds):
     selected = [
         signal
-        for time, signal in zip(times, signals)
+        for time, signal in zip(times, signals, strict=True)
         if bounds[0] <= time <= bounds[1]
     ]
     if len(selected) < 2:
@@ -49,12 +51,12 @@ def _reference_integrate(times, signals, window):
 
     points = [
         (time, signal - baseline(time))
-        for time, signal in zip(times, signals)
+        for time, signal in zip(times, signals, strict=True)
         if window.integration[0] <= time <= window.integration[1]
     ]
     area = sum(
         0.5 * (s0 + s1) * (t1 - t0)
-        for (t0, s0), (t1, s1) in zip(points, points[1:])
+        for (t0, s0), (t1, s1) in zip(points, points[1:], strict=False)
     )
     return {
         "area": area,
@@ -70,28 +72,28 @@ def _reference_calibration(points):
     ys = [float(item["response_ratio"]) for item in ordered]
     weights = [1.0 / (x * x) for x in xs]
     wsum = sum(weights)
-    xmean = sum(w * x for w, x in zip(weights, xs)) / wsum
-    ymean = sum(w * y for w, y in zip(weights, ys)) / wsum
-    sxx = sum(w * (x - xmean) ** 2 for w, x in zip(weights, xs))
+    xmean = sum(w * x for w, x in zip(weights, xs, strict=True)) / wsum
+    ymean = sum(w * y for w, y in zip(weights, ys, strict=True)) / wsum
+    sxx = sum(w * (x - xmean) ** 2 for w, x in zip(weights, xs, strict=True))
     sxy = sum(
         w * (x - xmean) * (y - ymean)
-        for w, x, y in zip(weights, xs, ys)
+        for w, x, y in zip(weights, xs, ys, strict=True)
     )
     slope = sxy / sxx
     intercept = ymean - slope * xmean
     residuals = [
-        y - intercept - slope * x for x, y in zip(xs, ys)
+        y - intercept - slope * x for x, y in zip(xs, ys, strict=True)
     ]
     ss_res = sum(
         w * residual * residual
-        for w, residual in zip(weights, residuals)
+        for w, residual in zip(weights, residuals, strict=True)
     )
-    ss_tot = sum(w * (y - ymean) ** 2 for w, y in zip(weights, ys))
+    ss_tot = sum(w * (y - ymean) ** 2 for w, y in zip(weights, ys, strict=True))
     r2 = 1.0 - ss_res / ss_tot
     sdyx = math.sqrt(ss_res / (len(points) - 2))
     loq = 10.0 * sdyx / slope
     recoveries = [
-        100.0 * ((y - intercept) / slope) / x for x, y in zip(xs, ys)
+        100.0 * ((y - intercept) / slope) / x for x, y in zip(xs, ys, strict=True)
     ]
     accepted = (
         len(ordered) >= 5
@@ -267,6 +269,7 @@ def _close(actual, expected, rel_tol=1e-9, abs_tol=1e-12):
 
 
 def test_c1_linear_baseline_is_removed():
+    """Remove a sloped local baseline before measuring analyte area."""
     times = [float(index) for index in range(11)]
     signals = [2.0 + 0.5 * time for time in times]
     signals[5] += 3.0
@@ -279,6 +282,7 @@ def test_c1_linear_baseline_is_removed():
 
 
 def test_c1_trapezoid_peak_area_matches_reference():
+    """Match independent trapezoidal integration of a Gaussian peak."""
     times = [36.0 + 0.1 * index for index in range(121)]
     signals = [
         1.1 + 0.013 * (time - 36.0)
@@ -293,6 +297,7 @@ def test_c1_trapezoid_peak_area_matches_reference():
 
 
 def test_c1_analyte_and_internal_standard_use_distinct_windows():
+    """Integrate the analyte and internal standard in separate windows."""
     times, signals = _load_trace("CAL-3")
     analyte = _reference_integrate(times, signals, ANALYTE_WINDOW)
     internal = _reference_integrate(times, signals, INTERNAL_STANDARD_WINDOW)
@@ -303,16 +308,26 @@ def test_c1_analyte_and_internal_standard_use_distinct_windows():
     assert not _close(float(actual_analyte["area"]), float(actual_internal["area"]))
 
 
-def test_c1_rejects_nonmonotonic_or_incomplete_trace():
-    with pytest.raises(ValueError):
+def test_c1_rejects_nonmonotonic_trace():
+    """Reject an out-of-order time series."""
+    with pytest.raises(ValueError, match="time|point|window|trace"):
         integrate_peak([0.0, 2.0, 1.0], [1.0, 1.0, 1.0], ANALYTE_WINDOW)
-    with pytest.raises(ValueError):
+
+
+def test_c1_rejects_incomplete_window():
+    """Reject a trace missing the baseline anchors."""
+    with pytest.raises(ValueError, match="time|point|window|trace"):
         integrate_peak([39.5, 40.0, 41.0], [1.0, 1.0, 1.0], ANALYTE_WINDOW)
-    with pytest.raises(ValueError):
+
+
+def test_c1_rejects_single_point():
+    """Reject a trace containing only one sample."""
+    with pytest.raises(ValueError, match="time|point|window|trace"):
         integrate_peak([39.2], [1.0], ANALYTE_WINDOW)
 
 
 def test_c2_weighted_least_squares_parameters():
+    """Calculate the independent 1/x-squared weighted line parameters."""
     points = [
         {"nominal_mg_l": 1.0, "response_ratio": 0.734},
         {"nominal_mg_l": 2.0, "response_ratio": 1.428},
@@ -327,6 +342,7 @@ def test_c2_weighted_least_squares_parameters():
 
 
 def test_c2_weighted_r2_uses_weighted_mean():
+    """Use the weighted response mean when computing fit quality."""
     points = [
         {"nominal_mg_l": 1.0, "response_ratio": 0.741},
         {"nominal_mg_l": 2.0, "response_ratio": 1.415},
@@ -340,6 +356,7 @@ def test_c2_weighted_r2_uses_weighted_mean():
 
 
 def test_c2_standard_recovery_acceptance_rules():
+    """Apply the distinct low-standard and remaining-standard limits."""
     points = [
         {"nominal_mg_l": 1.0, "response_ratio": 0.73},
         {"nominal_mg_l": 2.0, "response_ratio": 1.43},
@@ -363,6 +380,7 @@ def test_c2_standard_recovery_acceptance_rules():
 
 
 def test_c2_lod_and_loq_use_weighted_residual_error():
+    """Calculate detection limits from weighted residual error."""
     points = [
         {"nominal_mg_l": 1.0, "response_ratio": 0.71},
         {"nominal_mg_l": 2.0, "response_ratio": 1.46},
@@ -378,6 +396,7 @@ def test_c2_lod_and_loq_use_weighted_residual_error():
 
 
 def test_c3_dilution_and_blank_correction_are_applied():
+    """Apply dilution and blank subtraction in the final concentration."""
     calibration = {"slope": 2.0, "intercept": 0.1}
     actual = corrected_concentration(1.1, 10.0, calibration, 0.2)
     assert _close(actual, 4.8)
@@ -385,6 +404,7 @@ def test_c3_dilution_and_blank_correction_are_applied():
 
 
 def test_c3_duplicate_rpd_boundary():
+    """Calculate duplicate disagreement at and beyond the limit."""
     values = [100.0, 110.5263157894737]
     assert _close(relative_percent_difference(values), 10.0, rel_tol=1e-12)
     assert relative_percent_difference([0.0, 0.0]) == 0.0
@@ -392,12 +412,14 @@ def test_c3_duplicate_rpd_boundary():
 
 
 def test_c3_spike_recovery_formula_and_boundaries():
+    """Check spike recovery at both acceptance boundaries."""
     assert _close(spike_recovery_percent(18.0, 10.0, 10.0), 80.0)
     assert _close(spike_recovery_percent(22.0, 10.0, 10.0), 120.0)
     assert spike_recovery_percent(17.9, 10.0, 10.0) < 80.0
 
 
 def test_c3_sample_status_propagation():
+    """Propagate sample failures into QC and overall release status."""
     calibration = {
         "slope": 1.0,
         "intercept": 0.0,
@@ -437,6 +459,7 @@ def test_c3_sample_status_propagation():
 
 
 def test_e2e_report_schema_and_summary_values():
+    """Emit a complete report with the expected sample decisions."""
     reference = _reference_report()
     with tempfile.TemporaryDirectory() as directory:
         output = Path(directory) / "report.json"
@@ -467,75 +490,121 @@ def test_e2e_report_schema_and_summary_values():
 
 
 def test_e2e_full_sequence_matches_independent_reference():
+    """Match independent calculations across the complete GC sequence."""
     expected = _reference_report()
     with tempfile.TemporaryDirectory() as directory:
         output = Path(directory) / "report.json"
         process = _run_cli(DATA / "sequence.csv", DATA / "chromatograms.csv", output)
         actual = json.loads(output.read_text(encoding="utf-8"))
     assert process.returncode == 0
-    for key in (
+    calibration_keys = (
         "slope",
         "intercept",
         "weighted_r2",
         "sdyx",
         "lod_mg_l",
         "loq_mg_l",
-    ):
-        assert _close(float(actual["calibration"][key]), expected["calibration"][key], rel_tol=1e-8)
+    )
+    actual_calibration = {
+        key: float(actual["calibration"][key]) for key in calibration_keys
+    }
+    expected_calibration = {
+        key: expected["calibration"][key] for key in calibration_keys
+    }
+    assert actual_calibration == pytest.approx(expected_calibration, rel=1e-8, abs=1e-12)
     assert actual["calibration"]["accepted"] == expected["calibration"]["accepted"]
-    for index, standard in enumerate(actual["calibration"]["standards"]):
-        nominal = 1.0 * (2 ** index)
-        assert _close(float(standard["nominal_mg_l"]), nominal)
-        assert _close(
-            float(standard["recovery_percent"]),
-            expected["calibration"]["recoveries"][index],
-            rel_tol=1e-8,
-        )
-    for sample_id in ("S1", "S2"):
-        actual_sample = actual["samples"][sample_id]
-        expected_sample = expected["samples"][sample_id]
-        for key in ("concentration_mg_l", "duplicate_rpd_percent", "spike_recovery_percent"):
-            assert _close(float(actual_sample[key]), expected_sample[key], rel_tol=1e-8)
-        assert actual_sample["status"] == expected_sample["status"]
+    standards = actual["calibration"]["standards"]
+    assert len(standards) == len(expected["calibration"]["recoveries"]) == 5
+    assert [float(item["nominal_mg_l"]) for item in standards] == pytest.approx(
+        [1.0, 2.0, 4.0, 8.0, 16.0]
+    )
+    assert [float(item["recovery_percent"]) for item in standards] == pytest.approx(
+        expected["calibration"]["recoveries"], rel=1e-8, abs=1e-12
+    )
+    assert set(actual["samples"]) == set(expected["samples"]) == {"S1", "S2"}
+    numeric_sample_keys = (
+        "concentration_mg_l", "duplicate_rpd_percent", "spike_recovery_percent"
+    )
+    actual_samples = {
+        (sample_id, key): float(actual["samples"][sample_id][key])
+        for sample_id in ("S1", "S2")
+        for key in numeric_sample_keys
+    }
+    expected_samples = {
+        (sample_id, key): expected["samples"][sample_id][key]
+        for sample_id in ("S1", "S2")
+        for key in numeric_sample_keys
+    }
+    assert actual_samples == pytest.approx(expected_samples, rel=1e-8, abs=1e-12)
+    assert {
+        sample_id: sample["status"] for sample_id, sample in actual["samples"].items()
+    } == {
+        sample_id: sample["status"] for sample_id, sample in expected["samples"].items()
+    }
 
 
-def test_e2e_rejects_invalid_inputs_without_report():
+def _invalid_input_cases(root):
+    """Build one file pair for each invalid-input scenario."""
+    source_sequence = (DATA / "sequence.csv").read_text(encoding="utf-8")
+    source_chromatograms = (DATA / "chromatograms.csv").read_text(encoding="utf-8")
+
+    missing_column = root / "missing.csv"
+    lines = source_sequence.splitlines()
+    missing_column.write_text(
+        "\n".join(line.rsplit(",", 1)[0] for line in lines) + "\n",
+        encoding="utf-8",
+    )
+    non_numeric = root / "bad_number.csv"
+    non_numeric.write_text(
+        source_sequence.replace(",1.0,1.0,", ",1.0,not-a-number,", 1),
+        encoding="utf-8",
+    )
+    duplicate = root / "duplicate.csv"
+    duplicate_lines = source_sequence.splitlines()
+    duplicate_lines[2] = duplicate_lines[1]
+    duplicate.write_text("\n".join(duplicate_lines) + "\n", encoding="utf-8")
+    mismatch = root / "mismatch.csv"
+    mismatch_chromatograms = root / "mismatch_chrom.csv"
+    mismatch_chromatograms.write_text(
+        source_chromatograms.replace("S1-R1", "UNKNOWN", 196),
+        encoding="utf-8",
+    )
+    mismatch.write_text(source_sequence, encoding="utf-8")
+
+    return {
+        "missing-column": (missing_column, DATA / "chromatograms.csv"),
+        "non-numeric": (non_numeric, DATA / "chromatograms.csv"),
+        "duplicate": (duplicate, DATA / "chromatograms.csv"),
+        "trace-mismatch": (mismatch, mismatch_chromatograms),
+    }
+
+
+def _assert_rejected(bad_input):
+    """Verify the selected invalid input fails without a partial report."""
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
-        source_sequence = (DATA / "sequence.csv").read_text(encoding="utf-8")
-        source_chromatograms = (DATA / "chromatograms.csv").read_text(encoding="utf-8")
+        sequence_path, chromatogram_path = _invalid_input_cases(root)[bad_input]
+        output = root / "report.json"
+        process = _run_cli(sequence_path, chromatogram_path, output)
+        assert process.returncode != 0, bad_input
+        assert not output.exists(), bad_input
 
-        missing_column = root / "missing.csv"
-        lines = source_sequence.splitlines()
-        missing_column.write_text(
-            "\n".join(line.rsplit(",", 1)[0] for line in lines) + "\n",
-            encoding="utf-8",
-        )
-        non_numeric = root / "bad_number.csv"
-        non_numeric.write_text(
-            source_sequence.replace(",1.0,1.0,", ",1.0,not-a-number,", 1),
-            encoding="utf-8",
-        )
-        duplicate = root / "duplicate.csv"
-        duplicate_lines = source_sequence.splitlines()
-        duplicate_lines[2] = duplicate_lines[1]
-        duplicate.write_text("\n".join(duplicate_lines) + "\n", encoding="utf-8")
-        mismatch = root / "mismatch.csv"
-        mismatch_chromatograms = root / "mismatch_chrom.csv"
-        mismatch_chromatograms.write_text(
-            source_chromatograms.replace("S1-R1", "UNKNOWN", 196),
-            encoding="utf-8",
-        )
-        mismatch.write_text(source_sequence, encoding="utf-8")
 
-        cases = [
-            (missing_column, DATA / "chromatograms.csv"),
-            (non_numeric, DATA / "chromatograms.csv"),
-            (duplicate, DATA / "chromatograms.csv"),
-            (mismatch, mismatch_chromatograms),
-        ]
-        for index, (sequence_path, chromatogram_path) in enumerate(cases):
-            output = root / f"out-{index}.json"
-            process = _run_cli(sequence_path, chromatogram_path, output)
-            assert process.returncode != 0
-            assert not output.exists()
+def test_e2e_rejects_missing_column_without_report():
+    """Reject a missing sequence field without writing a report."""
+    _assert_rejected("missing-column")
+
+
+def test_e2e_rejects_non_numeric_field_without_report():
+    """Reject a nonnumeric sequence value without writing a report."""
+    _assert_rejected("non-numeric")
+
+
+def test_e2e_rejects_duplicate_run_without_report():
+    """Reject a repeated injection ID without writing a report."""
+    _assert_rejected("duplicate")
+
+
+def test_e2e_rejects_trace_mismatch_without_report():
+    """Reject unmatched chromatogram IDs without writing a report."""
+    _assert_rejected("trace-mismatch")
