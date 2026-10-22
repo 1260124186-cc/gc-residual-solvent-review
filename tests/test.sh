@@ -4,12 +4,16 @@ set -u
 reward_file=/logs/verifier/reward.txt
 ctrf_file=/logs/verifier/ctrf.json
 mkdir -p /logs/verifier
-echo "0" > "$reward_file"
 
 write_reward_zero() {
+  chmod 0644 "$reward_file" 2>/dev/null || true
   echo "0" > "$reward_file"
+  chmod 0444 "$reward_file"
 }
 
+write_reward_zero
+
+trap 'write_reward_zero' EXIT
 trap 'write_reward_zero; exit 130' INT TERM HUP
 
 if ! python -m pip install --user --no-cache-dir --disable-pip-version-check \
@@ -19,10 +23,11 @@ if ! python -m pip install --user --no-cache-dir --disable-pip-version-check \
 fi
 
 cd /workspace
-python -m pytest --ctrf "$ctrf_file" /tests/test_outputs.py -q
+timeout 240s python -m pytest --ctrf "$ctrf_file" /tests/test_outputs.py -q
 
 python3 - "$ctrf_file" "$reward_file" <<'PY'
 import json
+import os
 import sys
 
 ctrf_path, reward_path = sys.argv[1:]
@@ -50,9 +55,11 @@ for weight, prefix in groups.values():
         score += weight
 
 score = min(1.0, max(0.0, score))
+os.chmod(reward_path, 0o644)
 with open(reward_path, "w", encoding="utf-8") as handle:
     handle.write(f"{score:.6f}\n")
+os.chmod(reward_path, 0o444)
 PY
 
-trap - INT TERM HUP
+trap - EXIT INT TERM HUP
 exit 0

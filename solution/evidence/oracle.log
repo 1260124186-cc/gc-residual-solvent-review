@@ -1,4 +1,4 @@
-$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-oracle.5AbuXO:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-oracle.yIiqvt:/logs harbor-gc-review-quality:3255 bash /tests/test.sh
+$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-oracle.Tj75El:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-oracle.wv5MmY:/logs harbor-gc-review-quality:31836 bash /tests/test.sh
 Collecting pytest==8.4.1 (from -r /tests/requirements.txt (line 1))
   Downloading pytest-8.4.1-py3-none-any.whl (365 kB)
 Collecting pytest-json-ctrf==0.3.5 (from -r /tests/requirements.txt (line 2))
@@ -11,7 +11,7 @@ Collecting pluggy==1.7.0 (from -r /tests/requirements.txt (line 5))
   Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
 Collecting pygments==2.21.0 (from -r /tests/requirements.txt (line 6))
   Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 349.5 kB/s eta 0:00:00
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 354.6 kB/s eta 0:00:00
 Installing collected packages: pygments, pluggy, packaging, iniconfig, pytest, pytest-json-ctrf
   WARNING: The script pygmentize is installed in '/home/worker/.local/bin' which is not on PATH.
   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
@@ -21,10 +21,10 @@ Successfully installed iniconfig-2.3.1 packaging-26.3 pluggy-1.7.0 pygments-2.21
 ....................                                                     [100%]
 =============================== warnings summary ===============================
 ../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475
-  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-znara5jm'
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-x73ekgpp'
     config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-20 passed, 1 warning in 0.66s
+20 passed, 1 warning in 0.82s
 reward=1.000000
 summary=tests=20 passed=20 failed=0
