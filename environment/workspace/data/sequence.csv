@@ -1,0 +1,14 @@
+run_id,sample_id,role,replicate,dilution_factor,nominal_mg_l,spike_added_mg_l
+CAL-1,CAL1,calibration,1,1.0,1.0,
+CAL-2,CAL2,calibration,1,1.0,2.0,
+CAL-3,CAL3,calibration,1,1.0,4.0,
+CAL-4,CAL4,calibration,1,1.0,8.0,
+CAL-5,CAL5,calibration,1,1.0,16.0,
+BLK-1,BLANK,blank,1,1.0,,
+BLK-2,BLANK,blank,2,1.0,,
+S1-R1,S1,sample,1,5.0,,
+S1-R2,S1,sample,2,5.0,,
+S1-S,S1,spike,1,5.0,,8.0
+S2-R1,S2,sample,1,10.0,,
+S2-R2,S2,sample,2,10.0,,
+S2-S,S2,spike,1,10.0,,5.0

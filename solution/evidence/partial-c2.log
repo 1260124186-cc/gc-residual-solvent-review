@@ -1,0 +1,190 @@
+$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-c2.n7hoFY:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-partial-c2.9jyn6V:/logs harbor-gc-review-quality:98852 bash /tests/test.sh
+FFFF....F..FFF.                                                          [100%]
+=================================== FAILURES ===================================
+______________________ test_c1_linear_baseline_is_removed ______________________
+
+    def test_c1_linear_baseline_is_removed():
+        times = [float(index) for index in range(11)]
+        signals = [2.0 + 0.5 * time for time in times]
+        signals[5] += 3.0
+        window = PeakWindow((3.0, 7.0), (0.0, 2.0), (8.0, 10.0))
+        actual = integrate_peak(times, signals, window)
+        expected = _reference_integrate(times, signals, window)
+>       assert _close(float(actual["area"]), expected["area"])
+E       assert False
+E        +  where False = _close(21.0, 3.0)
+E        +    where 21.0 = float(21.0)
+
+/tests/test_outputs.py:276: AssertionError
+________________ test_c1_trapezoid_peak_area_matches_reference _________________
+
+    def test_c1_trapezoid_peak_area_matches_reference():
+        times = [36.0 + 0.1 * index for index in range(121)]
+        signals = [
+            1.1 + 0.013 * (time - 36.0)
+            + 2.7 * math.exp(-0.5 * ((time - 42.0) / 0.48) ** 2)
+            + 1.6 * math.exp(-0.5 * ((time - 57.0) / 0.55) ** 2)
+            for time in times
+        ]
+        actual = integrate_peak(times, signals, ANALYTE_WINDOW)
+        expected = _reference_integrate(times, signals, ANALYTE_WINDOW)
+>       assert _close(float(actual["area"]), expected["area"])
+E       assert False
+E        +  where False = _close(9.845390224087854, 3.2485902240878586)
+E        +    where 9.845390224087854 = float(9.845390224087854)
+
+/tests/test_outputs.py:291: AssertionError
+__________ test_c1_analyte_and_internal_standard_use_distinct_windows __________
+
+    def test_c1_analyte_and_internal_standard_use_distinct_windows():
+        times, signals = _load_trace("CAL-3")
+        analyte = _reference_integrate(times, signals, ANALYTE_WINDOW)
+        internal = _reference_integrate(times, signals, INTERNAL_STANDARD_WINDOW)
+        actual_analyte = integrate_peak(times, signals, ANALYTE_WINDOW)
+        actual_internal = integrate_peak(times, signals, INTERNAL_STANDARD_WINDOW)
+>       assert _close(float(actual_analyte["area"]), analyte["area"], rel_tol=1e-10)
+E       assert False
+E        +  where False = _close(1970.0561063, 1965.2149679, rel_tol=1e-10)
+E        +    where 1970.0561063 = float(1970.0561063)
+
+/tests/test_outputs.py:301: AssertionError
+_______________ test_c1_rejects_nonmonotonic_or_incomplete_trace _______________
+
+    def test_c1_rejects_nonmonotonic_or_incomplete_trace():
+        with pytest.raises(ValueError):
+            integrate_peak([0.0, 2.0, 1.0], [1.0, 1.0, 1.0], ANALYTE_WINDOW)
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+/tests/test_outputs.py:309: Failed
+______________ test_c3_dilution_and_blank_correction_are_applied _______________
+
+    def test_c3_dilution_and_blank_correction_are_applied():
+        calibration = {"slope": 2.0, "intercept": 0.1}
+        actual = corrected_concentration(1.1, 10.0, calibration, 0.2)
+>       assert _close(actual, 4.8)
+E       assert False
+E        +  where False = _close(0.3, 4.8)
+
+/tests/test_outputs.py:383: AssertionError
+______________________ test_c3_sample_status_propagation _______________________
+
+    def test_c3_sample_status_propagation():
+        calibration = {
+            "slope": 1.0,
+            "intercept": 0.0,
+            "loq_mg_l": 0.5,
+            "accepted": True,
+        }
+        sequence = [
+            {"run_id": "BLK", "sample_id": "BLANK", "role": "blank", "replicate": 1, "dilution_factor": 1.0},
+            {"run_id": "A1", "sample_id": "A", "role": "sample", "replicate": 1, "dilution_factor": 1.0},
+            {"run_id": "A2", "sample_id": "A", "role": "sample", "replicate": 2, "dilution_factor": 1.0},
+            {"run_id": "AS", "sample_id": "A", "role": "spike", "replicate": 1, "dilution_factor": 1.0, "spike_added_mg_l": 8.0},
+            {"run_id": "B1", "sample_id": "B", "role": "sample", "replicate": 1, "dilution_factor": 1.0},
+            {"run_id": "B2", "sample_id": "B", "role": "sample", "replicate": 2, "dilution_factor": 1.0},
+            {"run_id": "BS", "sample_id": "B", "role": "spike", "replicate": 1, "dilution_factor": 1.0, "spike_added_mg_l": 5.0},
+            {"run_id": "C1", "sample_id": "C", "role": "sample", "replicate": 1, "dilution_factor": 1.0},
+            {"run_id": "C2", "sample_id": "C", "role": "sample", "replicate": 2, "dilution_factor": 1.0},
+            {"run_id": "CS", "sample_id": "C", "role": "spike", "replicate": 1, "dilution_factor": 1.0, "spike_added_mg_l": 8.0},
+        ]
+        ratios = {
+            "BLK": 0.0,
+            "A1": 10.0,
+            "A2": 10.2,
+            "AS": 18.1,
+            "B1": 0.2,
+            "B2": 0.21,
+            "BS": 5.1,
+            "C1": 10.0,
+            "C2": 13.0,
+            "CS": 18.0,
+        }
+        review = review_samples(sequence, ratios, calibration)
+>       assert review["samples"]["A"]["status"] == "pass"
+               ^^^^^^^^^^^^^^^^^
+E       KeyError: 'samples'
+
+/tests/test_outputs.py:432: KeyError
+__________________ test_e2e_report_schema_and_summary_values ___________________
+
+    def test_e2e_report_schema_and_summary_values():
+        reference = _reference_report()
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "report.json"
+            process = _run_cli(DATA / "sequence.csv", DATA / "chromatograms.csv", output)
+            report = json.loads(output.read_text(encoding="utf-8"))
+        assert process.returncode == 0
+        assert set(report) == {
+            "calibration",
+            "blank_mean_mg_l",
+            "blank_correction_mg_l",
+            "qc",
+            "samples",
+            "overall_status",
+        }
+        assert set(report["calibration"]) == {
+            "slope",
+            "intercept",
+            "weighted_r2",
+            "sdyx",
+            "lod_mg_l",
+            "loq_mg_l",
+            "accepted",
+            "standards",
+        }
+        assert report["overall_status"] == reference["overall_status"]
+        assert report["samples"]["S1"]["status"] == "pass"
+>       assert report["samples"]["S2"]["status"] == "below_loq"
+E       AssertionError: assert 'pass' == 'below_loq'
+E         
+E         - below_loq
+E         + pass
+
+/tests/test_outputs.py:466: AssertionError
+_____________ test_e2e_full_sequence_matches_independent_reference _____________
+
+    def test_e2e_full_sequence_matches_independent_reference():
+        expected = _reference_report()
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "report.json"
+            process = _run_cli(DATA / "sequence.csv", DATA / "chromatograms.csv", output)
+            actual = json.loads(output.read_text(encoding="utf-8"))
+        assert process.returncode == 0
+        for key in (
+            "slope",
+            "intercept",
+            "weighted_r2",
+            "sdyx",
+            "lod_mg_l",
+            "loq_mg_l",
+        ):
+>           assert _close(float(actual["calibration"][key]), expected["calibration"][key], rel_tol=1e-8)
+E           assert False
+E            +  where False = _close(0.6954952267792704, 0.70013853923367, rel_tol=1e-08)
+E            +    where 0.6954952267792704 = float(0.6954952267792704)
+
+/tests/test_outputs.py:484: AssertionError
+=============================== warnings summary ===============================
+../usr/local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475
+  /usr/local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-wl6tbpvs'
+    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+
+../usr/local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429
+  /usr/local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-7gb7y52s'
+    config.cache.set("cache/lastfailed", self.lastfailed)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED ../tests/test_outputs.py::test_c1_linear_baseline_is_removed - assert ...
+FAILED ../tests/test_outputs.py::test_c1_trapezoid_peak_area_matches_reference
+FAILED ../tests/test_outputs.py::test_c1_analyte_and_internal_standard_use_distinct_windows
+FAILED ../tests/test_outputs.py::test_c1_rejects_nonmonotonic_or_incomplete_trace
+FAILED ../tests/test_outputs.py::test_c3_dilution_and_blank_correction_are_applied
+FAILED ../tests/test_outputs.py::test_c3_sample_status_propagation - KeyError...
+FAILED ../tests/test_outputs.py::test_e2e_report_schema_and_summary_values - ...
+FAILED ../tests/test_outputs.py::test_e2e_full_sequence_matches_independent_reference
+8 failed, 7 passed, 2 warnings in 0.80s
+reward=0.300000
+summary=tests=15 passed=7 failed=8

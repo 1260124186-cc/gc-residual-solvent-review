@@ -1,0 +1,47 @@
+{
+  "baseline": {
+    "reward": 0,
+    "evidence": "solution/evidence/baseline.log"
+  },
+  "oracle": {
+    "reward": 1,
+    "evidence": "solution/evidence/oracle.log"
+  },
+  "partials": [
+    {
+      "challenge_id": "C1",
+      "reward": 0.3,
+      "evidence": "solution/evidence/partial-c1.log"
+    },
+    {
+      "challenge_id": "C2",
+      "reward": 0.3,
+      "evidence": "solution/evidence/partial-c2.log"
+    },
+    {
+      "challenge_id": "C3",
+      "reward": 0.3,
+      "evidence": "solution/evidence/partial-c3.log"
+    }
+  ],
+  "bypasses": [
+    {
+      "id": "B1",
+      "description": "命令正常退出但只写出空JSON对象",
+      "reward": 0.9,
+      "evidence": "solution/evidence/bypass-empty.log"
+    },
+    {
+      "id": "B2",
+      "description": "硬编码随包模拟序列的汇总值，不读取输入色谱",
+      "reward": 0.9,
+      "evidence": "solution/evidence/bypass-hardcoded.log"
+    },
+    {
+      "id": "B3",
+      "description": "命令退出码为零但输出截断的非JSON文本",
+      "reward": 0.9,
+      "evidence": "solution/evidence/bypass-malformed.log"
+    }
+  ]
+}

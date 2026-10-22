@@ -1,0 +1,27 @@
+schema_version = "1.3"
+
+[task]
+name = "local/gc-residual-solvent-review"
+description = "Process a GC-FID sequence for ethyl acetate using internal-standard calibration and QC review."
+authors = [{ name = "zhangchengcheng" }]
+keywords = ["gas chromatography", "residual solvent", "internal standard", "weighted calibration", "quality control"]
+
+[agent]
+timeout_sec = 3600
+
+[environment]
+build_timeout_sec = 900
+cpus = 1
+memory_mb = 2048
+storage_mb = 4096
+gpus = 0
+allow_internet = true
+
+[verifier]
+timeout_sec = 300
+
+[metadata]
+difficulty = "expert"
+category = "D-化学与材料"
+tags = ["Python", "气相色谱", "残留溶剂", "加权最小二乘", "实验室质量审核"]
+expert_time_estimate = "4h"

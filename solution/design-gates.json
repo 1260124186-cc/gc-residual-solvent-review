@@ -1,0 +1,255 @@
+{
+  "name": "gc-residual-solvent-review",
+  "category": "D-化学与材料",
+  "scene": "药物中间体顶空气相色谱残留溶剂乙酸乙酯的序列审核与放行计算",
+  "core_task": "从GC-FID色谱序列中提取目标物和内标峰面积，完成内标加权校准、空白与稀释校正、平行样及加标回收判定，输出结构化审核报告",
+  "data_provenance": {
+    "kind": "generated",
+    "source": "按线性基线、两个高斯峰和固定幅度的确定性噪声生成GC-FID模拟序列；生成规则保存在solution/generate_data.py",
+    "seed": 20261022
+  },
+  "answer_verification": "以测试内独立实现的线性基线梯形积分、权重1/x^2的加权最小二乘、加权残差标准误和QC公式逐项复算，并用完整参考实现核对端到端JSON",
+  "environment": {
+    "base_image": "python:3.12.8-slim-bookworm@sha256:2199a62885a12290dc9c5be3ca0681d367576ab7bf037da120e564723292a2f0",
+    "dependencies_locked": true,
+    "allow_internet": true,
+    "network_reason": "业务程序与评分只依赖Python标准库和预装pytest，但候选代理初始化需要包管理器获取curl、node、npm和ripgrep，因此保留联网开关",
+    "architectures": [
+      "amd64",
+      "arm64"
+    ]
+  },
+  "requirements": [
+    {
+      "id": "R1",
+      "statement": "对每个进样分别用指定锚点区间拟合线性基线，在积分窗口内扣除基线并用梯形法得到乙酸乙酯和内标峰面积",
+      "observable": "每个峰的面积、基线端点以及缺少锚点或时间不递增时抛出的错误",
+      "expected_basis": "线性基线在锚点区间均值之间插值，面积等于逐点基线扣除后的梯形积分",
+      "test_ids": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "id": "R2",
+      "statement": "以标准品峰面积比和标示浓度拟合带截距的加权线性模型，权重为1/x^2，并给出加权R2、回算回收率、LOD和LOQ",
+      "observable": "校准参数、加权R2、各标准回算回收率、检测限和定量限",
+      "expected_basis": "最小化sum(w_i*(y_i-a-b*x_i)^2)，s_yx使用同一权重，LOD=3.3*s_yx/b，LOQ=10*s_yx/b",
+      "test_ids": [
+        "T5",
+        "T6",
+        "T7",
+        "T8"
+      ]
+    },
+    {
+      "id": "R3",
+      "statement": "按稀释倍数和空白均值计算样品浓度，并用平行样相对偏差、加标回收率及校准验收结果生成样品与整批状态",
+      "observable": "样品浓度、平行样RPD、加标回收率、空白和各项QC状态以及整批结论",
+      "expected_basis": "稀释后浓度=(峰面积比-截距)/斜率*稀释倍数，再减去空白均值且下限为0；RPD和回收率按题面给定公式计算",
+      "test_ids": [
+        "T9",
+        "T10",
+        "T11",
+        "T12"
+      ]
+    },
+    {
+      "id": "R4",
+      "statement": "命令行读取序列与色谱CSV，拒绝缺失列、非法数值、未知角色或重复进样号，并输出固定结构的JSON报告",
+      "observable": "成功时的输出文件、报告字段、每个样品的状态，以及错误输入时的非零退出状态",
+      "expected_basis": "有效序列按进样号连接色谱数据并执行完整计算；任何结构或数值错误均以非零状态退出且不产生看似完整的结果",
+      "test_ids": [
+        "T13",
+        "T14",
+        "T15"
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "id": "T1",
+      "kind": "normal",
+      "requirement_ids": [
+        "R1"
+      ],
+      "expected": "线性倾斜基线的两个端点和面积与独立复算一致",
+      "weight": 0.075
+    },
+    {
+      "id": "T2",
+      "kind": "normal",
+      "requirement_ids": [
+        "R1"
+      ],
+      "expected": "单峰面积在1e-9相对容差内匹配梯形积分",
+      "weight": 0.075
+    },
+    {
+      "id": "T3",
+      "kind": "normal",
+      "requirement_ids": [
+        "R1"
+      ],
+      "expected": "目标峰与内标峰使用各自锚点和积分窗口",
+      "weight": 0.075
+    },
+    {
+      "id": "T4",
+      "kind": "error",
+      "requirement_ids": [
+        "R1"
+      ],
+      "expected": "锚点不足、时间不严格递增或窗口越界时拒绝计算",
+      "weight": 0.075
+    },
+    {
+      "id": "T5",
+      "kind": "normal",
+      "requirement_ids": [
+        "R2"
+      ],
+      "expected": "加权回归的斜率与截距和独立矩阵复算一致",
+      "weight": 0.075
+    },
+    {
+      "id": "T6",
+      "kind": "boundary",
+      "requirement_ids": [
+        "R2"
+      ],
+      "expected": "加权R2使用加权均值和加权残差",
+      "weight": 0.075
+    },
+    {
+      "id": "T7",
+      "kind": "normal",
+      "requirement_ids": [
+        "R2"
+      ],
+      "expected": "各标准回算回收率及最低点20%与其他点15%的验收判定正确",
+      "weight": 0.075
+    },
+    {
+      "id": "T8",
+      "kind": "boundary",
+      "requirement_ids": [
+        "R2"
+      ],
+      "expected": "LOD与LOQ使用加权残差标准误并保持正斜率",
+      "weight": 0.075
+    },
+    {
+      "id": "T9",
+      "kind": "normal",
+      "requirement_ids": [
+        "R3"
+      ],
+      "expected": "样品浓度包含稀释倍数和空白扣除，负值归零",
+      "weight": 0.075
+    },
+    {
+      "id": "T10",
+      "kind": "boundary",
+      "requirement_ids": [
+        "R3"
+      ],
+      "expected": "平行样RPD在10%边界的内外判定正确",
+      "weight": 0.075
+    },
+    {
+      "id": "T11",
+      "kind": "boundary",
+      "requirement_ids": [
+        "R3"
+      ],
+      "expected": "加标回收率在80%和120%边界的内外判定正确",
+      "weight": 0.075
+    },
+    {
+      "id": "T12",
+      "kind": "combination",
+      "requirement_ids": [
+        "R3"
+      ],
+      "expected": "低于LOQ、QC失败和通过三类样品状态以及整批状态正确传播",
+      "weight": 0.075
+    },
+    {
+      "id": "T13",
+      "kind": "normal",
+      "requirement_ids": [
+        "R4"
+      ],
+      "expected": "报告字段、数值类型和样品键与题面结构一致",
+      "weight": 0.04
+    },
+    {
+      "id": "T14",
+      "kind": "combination",
+      "requirement_ids": [
+        "R4"
+      ],
+      "expected": "固定种子生成的整批数据得到独立参考实现的完整报告",
+      "weight": 0.04
+    },
+    {
+      "id": "T15",
+      "kind": "error",
+      "requirement_ids": [
+        "R4"
+      ],
+      "expected": "缺列、非法数值、未知角色或重复进样号均以非零状态退出",
+      "weight": 0.02
+    }
+  ],
+  "challenges": [
+    {
+      "id": "C1",
+      "description": "色谱峰面积必须基于每个峰自己的线性锚点基线积分，不能用固定零基线或整段窗口面积代替",
+      "failure_mode": "基线漂移未扣除或把噪声和拖尾一并计入面积",
+      "fix_action": "按锚点区间均值构造随时间变化的线性基线，并在指定积分窗口逐段梯形求和",
+      "requirement_ids": [
+        "R1"
+      ],
+      "test_ids": [
+        "T1",
+        "T2",
+        "T3",
+        "T4"
+      ]
+    },
+    {
+      "id": "C2",
+      "description": "内标校准曲线必须使用1/x^2权重，并区分加权回归本身与由加权残差得到的检出限",
+      "failure_mode": "直接做等权普通最小二乘，导致低浓度标准权重不足",
+      "fix_action": "构造加权正规方程求斜率和截距，并用同一权重计算加权R2、加权残差标准误和回算值",
+      "requirement_ids": [
+        "R2"
+      ],
+      "test_ids": [
+        "T5",
+        "T6",
+        "T7",
+        "T8"
+      ]
+    },
+    {
+      "id": "C3",
+      "description": "样品放行结论要综合稀释倍数、空白、LOQ、平行样RPD和加标回收率，不能只报仪器浓度",
+      "failure_mode": "报告值漏乘稀释倍数或未扣除空白，并且未把QC失败传播到样品状态",
+      "fix_action": "在换算到最终样品浓度后统一做空白扣除，再按样品汇总平行样和加标数据并逐级生成状态",
+      "requirement_ids": [
+        "R3"
+      ],
+      "test_ids": [
+        "T9",
+        "T10",
+        "T11",
+        "T12"
+      ]
+    }
+  ]
+}

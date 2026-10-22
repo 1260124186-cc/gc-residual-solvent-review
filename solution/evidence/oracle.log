@@ -1,0 +1,11 @@
+$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-oracle.0doFsf:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-oracle.xCfeXk:/logs harbor-gc-review-quality:98852 bash /tests/test.sh
+...............                                                          [100%]
+=============================== warnings summary ===============================
+../usr/local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475
+  /usr/local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-9j6oohsj'
+    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+15 passed, 1 warning in 0.79s
+reward=1.000000
+summary=tests=15 passed=15 failed=0

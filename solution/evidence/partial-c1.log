@@ -1,0 +1,253 @@
+$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-c1.zNT6jJ:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-partial-c1.kbbLNW:/logs harbor-gc-review-quality:98852 bash /tests/test.sh
+....FFFFF..FFFF                                                          [100%]
+=================================== FAILURES ===================================
+__________________ test_c2_weighted_least_squares_parameters ___________________
+
+    def test_c2_weighted_least_squares_parameters():
+        points = [
+            {"nominal_mg_l": 1.0, "response_ratio": 0.734},
+            {"nominal_mg_l": 2.0, "response_ratio": 1.428},
+            {"nominal_mg_l": 4.0, "response_ratio": 2.842},
+            {"nominal_mg_l": 8.0, "response_ratio": 5.624},
+            {"nominal_mg_l": 16.0, "response_ratio": 11.238},
+        ]
+        expected = _reference_calibration(points)
+        actual = weighted_calibration(points)
+>       assert _close(float(actual["slope"]), expected["slope"])
+E       assert False
+E        +  where False = _close(0.7001935483870967, 0.6998437499999999)
+E        +    where 0.7001935483870967 = float(0.7001935483870967)
+
+/tests/test_outputs.py:325: AssertionError
+____________________ test_c2_weighted_r2_uses_weighted_mean ____________________
+
+    def test_c2_weighted_r2_uses_weighted_mean():
+        points = [
+            {"nominal_mg_l": 1.0, "response_ratio": 0.741},
+            {"nominal_mg_l": 2.0, "response_ratio": 1.415},
+            {"nominal_mg_l": 4.0, "response_ratio": 2.836},
+            {"nominal_mg_l": 8.0, "response_ratio": 5.647},
+            {"nominal_mg_l": 16.0, "response_ratio": 11.221},
+        ]
+        expected = _reference_calibration(points)
+        actual = weighted_calibration(points)
+>       assert _close(float(actual["weighted_r2"]), expected["weighted_r2"])
+E       assert False
+E        +  where False = _close(0.9999903379641836, 0.9998803075397891)
+E        +    where 0.9999903379641836 = float(0.9999903379641836)
+
+/tests/test_outputs.py:339: AssertionError
+__________________ test_c2_standard_recovery_acceptance_rules __________________
+
+    def test_c2_standard_recovery_acceptance_rules():
+        points = [
+            {"nominal_mg_l": 1.0, "response_ratio": 0.73},
+            {"nominal_mg_l": 2.0, "response_ratio": 1.43},
+            {"nominal_mg_l": 4.0, "response_ratio": 2.83},
+            {"nominal_mg_l": 8.0, "response_ratio": 5.63},
+            {"nominal_mg_l": 16.0, "response_ratio": 11.23},
+        ]
+        good = weighted_calibration(points)
+        assert good["accepted"] is True
+        bad_points = [dict(point) for point in points]
+        bad_points[0]["response_ratio"] *= 1.30
+        bad = weighted_calibration(bad_points)
+        expected_bad = _reference_calibration(bad_points)
+>       assert bad["accepted"] is False
+E       assert True is False
+
+/tests/test_outputs.py:356: AssertionError
+_______________ test_c2_lod_and_loq_use_weighted_residual_error ________________
+
+    def test_c2_lod_and_loq_use_weighted_residual_error():
+        points = [
+            {"nominal_mg_l": 1.0, "response_ratio": 0.71},
+            {"nominal_mg_l": 2.0, "response_ratio": 1.46},
+            {"nominal_mg_l": 4.0, "response_ratio": 2.82},
+            {"nominal_mg_l": 8.0, "response_ratio": 5.68},
+            {"nominal_mg_l": 16.0, "response_ratio": 11.18},
+        ]
+        expected = _reference_calibration(points)
+        actual = weighted_calibration(points)
+>       assert _close(float(actual["sdyx"]), expected["sdyx"])
+E       assert False
+E        +  where False = _close(0.04212968542803569, 0.012569141216960683)
+E        +    where 0.04212968542803569 = float(0.04212968542803569)
+
+/tests/test_outputs.py:375: AssertionError
+______________ test_c3_dilution_and_blank_correction_are_applied _______________
+
+    def test_c3_dilution_and_blank_correction_are_applied():
+        calibration = {"slope": 2.0, "intercept": 0.1}
+        actual = corrected_concentration(1.1, 10.0, calibration, 0.2)
+>       assert _close(actual, 4.8)
+E       assert False
+E        +  where False = _close(0.3, 4.8)
+
+/tests/test_outputs.py:383: AssertionError
+______________________ test_c3_sample_status_propagation _______________________
+
+    def test_c3_sample_status_propagation():
+        calibration = {
+            "slope": 1.0,
+            "intercept": 0.0,
+            "loq_mg_l": 0.5,
+            "accepted": True,
+        }
+        sequence = [
+            {"run_id": "BLK", "sample_id": "BLANK", "role": "blank", "replicate": 1, "dilution_factor": 1.0},
+            {"run_id": "A1", "sample_id": "A", "role": "sample", "replicate": 1, "dilution_factor": 1.0},
+            {"run_id": "A2", "sample_id": "A", "role": "sample", "replicate": 2, "dilution_factor": 1.0},
+            {"run_id": "AS", "sample_id": "A", "role": "spike", "replicate": 1, "dilution_factor": 1.0, "spike_added_mg_l": 8.0},
+            {"run_id": "B1", "sample_id": "B", "role": "sample", "replicate": 1, "dilution_factor": 1.0},
+            {"run_id": "B2", "sample_id": "B", "role": "sample", "replicate": 2, "dilution_factor": 1.0},
+            {"run_id": "BS", "sample_id": "B", "role": "spike", "replicate": 1, "dilution_factor": 1.0, "spike_added_mg_l": 5.0},
+            {"run_id": "C1", "sample_id": "C", "role": "sample", "replicate": 1, "dilution_factor": 1.0},
+            {"run_id": "C2", "sample_id": "C", "role": "sample", "replicate": 2, "dilution_factor": 1.0},
+            {"run_id": "CS", "sample_id": "C", "role": "spike", "replicate": 1, "dilution_factor": 1.0, "spike_added_mg_l": 8.0},
+        ]
+        ratios = {
+            "BLK": 0.0,
+            "A1": 10.0,
+            "A2": 10.2,
+            "AS": 18.1,
+            "B1": 0.2,
+            "B2": 0.21,
+            "BS": 5.1,
+            "C1": 10.0,
+            "C2": 13.0,
+            "CS": 18.0,
+        }
+        review = review_samples(sequence, ratios, calibration)
+>       assert review["samples"]["A"]["status"] == "pass"
+               ^^^^^^^^^^^^^^^^^
+E       KeyError: 'samples'
+
+/tests/test_outputs.py:432: KeyError
+__________________ test_e2e_report_schema_and_summary_values ___________________
+
+    def test_e2e_report_schema_and_summary_values():
+        reference = _reference_report()
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "report.json"
+            process = _run_cli(DATA / "sequence.csv", DATA / "chromatograms.csv", output)
+            report = json.loads(output.read_text(encoding="utf-8"))
+        assert process.returncode == 0
+        assert set(report) == {
+            "calibration",
+            "blank_mean_mg_l",
+            "blank_correction_mg_l",
+            "qc",
+            "samples",
+            "overall_status",
+        }
+        assert set(report["calibration"]) == {
+            "slope",
+            "intercept",
+            "weighted_r2",
+            "sdyx",
+            "lod_mg_l",
+            "loq_mg_l",
+            "accepted",
+            "standards",
+        }
+        assert report["overall_status"] == reference["overall_status"]
+        assert report["samples"]["S1"]["status"] == "pass"
+>       assert report["samples"]["S2"]["status"] == "below_loq"
+E       AssertionError: assert 'pass' == 'below_loq'
+E         
+E         - below_loq
+E         + pass
+
+/tests/test_outputs.py:466: AssertionError
+_____________ test_e2e_full_sequence_matches_independent_reference _____________
+
+    def test_e2e_full_sequence_matches_independent_reference():
+        expected = _reference_report()
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "report.json"
+            process = _run_cli(DATA / "sequence.csv", DATA / "chromatograms.csv", output)
+            actual = json.loads(output.read_text(encoding="utf-8"))
+        assert process.returncode == 0
+        for key in (
+            "slope",
+            "intercept",
+            "weighted_r2",
+            "sdyx",
+            "lod_mg_l",
+            "loq_mg_l",
+        ):
+>           assert _close(float(actual["calibration"][key]), expected["calibration"][key], rel_tol=1e-8)
+E           assert False
+E            +  where False = _close(0.7002294114715107, 0.70013853923367, rel_tol=1e-08)
+E            +    where 0.7002294114715107 = float(0.7002294114715107)
+
+/tests/test_outputs.py:484: AssertionError
+________________ test_e2e_rejects_invalid_inputs_without_report ________________
+
+    def test_e2e_rejects_invalid_inputs_without_report():
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source_sequence = (DATA / "sequence.csv").read_text(encoding="utf-8")
+            source_chromatograms = (DATA / "chromatograms.csv").read_text(encoding="utf-8")
+    
+            missing_column = root / "missing.csv"
+            lines = source_sequence.splitlines()
+            missing_column.write_text(
+                "\n".join(line.rsplit(",", 1)[0] for line in lines) + "\n",
+                encoding="utf-8",
+            )
+            non_numeric = root / "bad_number.csv"
+            non_numeric.write_text(
+                source_sequence.replace(",1.0,1.0,", ",1.0,not-a-number,", 1),
+                encoding="utf-8",
+            )
+            duplicate = root / "duplicate.csv"
+            duplicate_lines = source_sequence.splitlines()
+            duplicate_lines[2] = duplicate_lines[1]
+            duplicate.write_text("\n".join(duplicate_lines) + "\n", encoding="utf-8")
+            mismatch = root / "mismatch.csv"
+            mismatch_chromatograms = root / "mismatch_chrom.csv"
+            mismatch_chromatograms.write_text(
+                source_chromatograms.replace("S1-R1", "UNKNOWN", 196),
+                encoding="utf-8",
+            )
+            mismatch.write_text(source_sequence, encoding="utf-8")
+    
+            cases = [
+                (missing_column, DATA / "chromatograms.csv"),
+                (non_numeric, DATA / "chromatograms.csv"),
+                (duplicate, DATA / "chromatograms.csv"),
+                (mismatch, mismatch_chromatograms),
+            ]
+            for index, (sequence_path, chromatogram_path) in enumerate(cases):
+                output = root / f"out-{index}.json"
+                process = _run_cli(sequence_path, chromatogram_path, output)
+>               assert process.returncode != 0
+E               AssertionError: assert 0 != 0
+E                +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmpfjvyjn87/duplicate.csv', '/workspace/data/chromatograms.csv', '/tmp/tmpfjvyjn87/out-2.json'], returncode=0, stdout='', stderr='').returncode
+
+/tests/test_outputs.py:540: AssertionError
+=============================== warnings summary ===============================
+../usr/local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475
+  /usr/local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-jo38rj_s'
+    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+
+../usr/local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429
+  /usr/local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-kxt3dz2m'
+    config.cache.set("cache/lastfailed", self.lastfailed)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED ../tests/test_outputs.py::test_c2_weighted_least_squares_parameters - ...
+FAILED ../tests/test_outputs.py::test_c2_weighted_r2_uses_weighted_mean - ass...
+FAILED ../tests/test_outputs.py::test_c2_standard_recovery_acceptance_rules
+FAILED ../tests/test_outputs.py::test_c2_lod_and_loq_use_weighted_residual_error
+FAILED ../tests/test_outputs.py::test_c3_dilution_and_blank_correction_are_applied
+FAILED ../tests/test_outputs.py::test_c3_sample_status_propagation - KeyError...
+FAILED ../tests/test_outputs.py::test_e2e_report_schema_and_summary_values - ...
+FAILED ../tests/test_outputs.py::test_e2e_full_sequence_matches_independent_reference
+FAILED ../tests/test_outputs.py::test_e2e_rejects_invalid_inputs_without_report
+9 failed, 6 passed, 2 warnings in 0.66s
+reward=0.300000
+summary=tests=15 passed=6 failed=9
