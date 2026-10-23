@@ -10,9 +10,9 @@ from pathlib import Path
 
 
 SEED = 20261022
-START_S = 34.0
-STOP_S = 64.0
-STEP_S = 0.2
+START_S = 36.0
+STOP_S = 62.5
+STEP_S = 0.5
 ANALYTE_CENTER_S = 42.0
 ANALYTE_SIGMA_S = 0.58
 INTERNAL_CENTER_S = 57.0
@@ -97,7 +97,7 @@ def write_chromatograms(path: Path) -> None:
                         is_amplitude,
                     )
                 )
-                writer.writerow([run_id, f"{time_s:.1f}", f"{signal:.6f}"])
+                writer.writerow([run_id, f"{time_s:.1f}", f"{signal:.4f}"])
 
 
 def main() -> None:

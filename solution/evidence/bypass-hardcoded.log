@@ -1,4 +1,4 @@
-$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-hardcoded.GDYA6h:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-bypass-hardcoded.7yRvQW:/logs harbor-gc-review-quality:31836 bash /tests/test.sh
+$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-hardcoded.nwNgmU:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-bypass-hardcoded.TKzogL:/logs harbor-gc-review-quality:85893 bash /tests/test.sh
 Collecting pytest==8.4.1 (from -r /tests/requirements.txt (line 1))
   Downloading pytest-8.4.1-py3-none-any.whl (365 kB)
 Collecting pytest-json-ctrf==0.3.5 (from -r /tests/requirements.txt (line 2))
@@ -11,7 +11,7 @@ Collecting pluggy==1.7.0 (from -r /tests/requirements.txt (line 5))
   Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
 Collecting pygments==2.21.0 (from -r /tests/requirements.txt (line 6))
   Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 527.0 kB/s eta 0:00:00
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 69.2 kB/s eta 0:00:00
 Installing collected packages: pygments, pluggy, packaging, iniconfig, pytest, pytest-json-ctrf
   WARNING: The script pygmentize is installed in '/home/worker/.local/bin' which is not on PATH.
   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
@@ -45,15 +45,16 @@ _____________ test_e2e_full_sequence_matches_independent_reference _____________
             key: expected["calibration"][key] for key in calibration_keys
         }
 >       assert actual_calibration == pytest.approx(expected_calibration, rel=1e-8, abs=1e-12)
-E       AssertionError: assert {'intercept':...00133717, ...} == approx({'slop...79 ± 1.9e-11})
+E       AssertionError: assert {'intercept':...00133717, ...} == approx({'slop...56 ± 4.7e-12})
 E         
-E         comparison failed. Mismatched elements: 3 / 6:
-E         Max absolute difference: 0.00012865816447060752
-E         Max relative difference: 0.004314646743125873
-E         Index     | Obtained            | Expected                        
-E         intercept | 0.02994759170186545 | 0.029818933537394843 ± 3.0e-10  
-E         sdyx      | 0.000133717         | 0.00013370978574342755 ± 1.3e-12
-E         lod_mg_l  | 0.00063             | 0.000630221403661436 ± 6.3e-12
+E         comparison failed. Mismatched elements: 6 / 6:
+E         Max absolute difference: 0.0014369337800952996
+E         Max relative difference: 3.039019750590787
+E         Index       | Obtained              | Expected                        
+E         slope       | 0.70013853923367      | 0.7002183134315537 ± 7.0e-09    
+E         intercept   | 0.02994759170186545   | 0.029566441589217618 ± 3.0e-10  ...
+E         
+E         ...Full output truncated (4 lines hidden), use '-vv' to show
 
 /tests/test_outputs.py:542: AssertionError
 ________________ test_e2e_rejects_missing_column_without_report ________________
@@ -67,7 +68,7 @@ ________________ test_e2e_rejects_missing_column_without_report ________________
             process = _run_cli(sequence_path, chromatogram_path, output)
 >           assert process.returncode != 0
 E           AssertionError: assert 0 != 0
-E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmpskk4ryc0/missing.csv', '/workspace/data/chromatograms.csv', '/tmp/tmpskk4ryc0/report.json'], returncode=0, stdout='', stderr='').returncode
+E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmpwitgu3gn/missing.csv', '/workspace/data/chromatograms.csv', '/tmp/tmpwitgu3gn/report.json'], returncode=0, stdout='', stderr='').returncode
 
 /tests/test_outputs.py:617: AssertionError
 ______________ test_e2e_rejects_non_numeric_field_without_report _______________
@@ -81,7 +82,7 @@ ______________ test_e2e_rejects_non_numeric_field_without_report _______________
             process = _run_cli(sequence_path, chromatogram_path, output)
 >           assert process.returncode != 0
 E           AssertionError: assert 0 != 0
-E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmpegvwmc41/bad_number.csv', '/workspace/data/chromatograms.csv', '/tmp/tmpegvwmc41/report.json'], returncode=0, stdout='', stderr='').returncode
+E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmp4jpdj7p1/bad_number.csv', '/workspace/data/chromatograms.csv', '/tmp/tmp4jpdj7p1/report.json'], returncode=0, stdout='', stderr='').returncode
 
 /tests/test_outputs.py:628: AssertionError
 ________________ test_e2e_rejects_duplicate_run_without_report _________________
@@ -95,7 +96,7 @@ ________________ test_e2e_rejects_duplicate_run_without_report _________________
             process = _run_cli(sequence_path, chromatogram_path, output)
 >           assert process.returncode != 0
 E           AssertionError: assert 0 != 0
-E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmppd521pbe/duplicate.csv', '/workspace/data/chromatograms.csv', '/tmp/tmppd521pbe/report.json'], returncode=0, stdout='', stderr='').returncode
+E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmp9vmjufzi/duplicate.csv', '/workspace/data/chromatograms.csv', '/tmp/tmp9vmjufzi/report.json'], returncode=0, stdout='', stderr='').returncode
 
 /tests/test_outputs.py:639: AssertionError
 ________________ test_e2e_rejects_trace_mismatch_without_report ________________
@@ -109,16 +110,16 @@ ________________ test_e2e_rejects_trace_mismatch_without_report ________________
             process = _run_cli(sequence_path, chromatogram_path, output)
 >           assert process.returncode != 0
 E           AssertionError: assert 0 != 0
-E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmp1rcs1w6a/mismatch.csv', '/tmp/tmp1rcs1w6a/mismatch_chrom.csv', '/tmp/tmp1rcs1w6a/report.json'], returncode=0, stdout='', stderr='').returncode
+E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmp2w88fgai/mismatch.csv', '/tmp/tmp2w88fgai/mismatch_chrom.csv', '/tmp/tmp2w88fgai/report.json'], returncode=0, stdout='', stderr='').returncode
 
 /tests/test_outputs.py:650: AssertionError
 =============================== warnings summary ===============================
 ../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475
-  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-ne44k58r'
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-q4hx96wo'
     config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
 
 ../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429
-  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-4bjz3xht'
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-waepjb43'
     config.cache.set("cache/lastfailed", self.lastfailed)
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
@@ -128,6 +129,6 @@ FAILED ../tests/test_outputs.py::test_e2e_rejects_missing_column_without_report
 FAILED ../tests/test_outputs.py::test_e2e_rejects_non_numeric_field_without_report
 FAILED ../tests/test_outputs.py::test_e2e_rejects_duplicate_run_without_report
 FAILED ../tests/test_outputs.py::test_e2e_rejects_trace_mismatch_without_report
-5 failed, 15 passed, 2 warnings in 0.45s
+5 failed, 15 passed, 2 warnings in 0.74s
 reward=0.900000
 summary=tests=20 passed=15 failed=5
