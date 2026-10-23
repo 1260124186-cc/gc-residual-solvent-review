@@ -1,4 +1,4 @@
-$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-c2.gJnf4j:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-partial-c2.5x4oMm:/logs harbor-gc-review-quality:85893 bash /tests/test.sh
+$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-c2.y9vYc6:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-partial-c2.1c0gul:/logs harbor-gc-review-quality:71639 bash /tests/test.sh
 Collecting pytest==8.4.1 (from -r /tests/requirements.txt (line 1))
   Downloading pytest-8.4.1-py3-none-any.whl (365 kB)
 Collecting pytest-json-ctrf==0.3.5 (from -r /tests/requirements.txt (line 2))
@@ -11,7 +11,7 @@ Collecting pluggy==1.7.0 (from -r /tests/requirements.txt (line 5))
   Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
 Collecting pygments==2.21.0 (from -r /tests/requirements.txt (line 6))
   Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 409.8 kB/s eta 0:00:00
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 993.8 kB/s eta 0:00:00
 Installing collected packages: pygments, pluggy, packaging, iniconfig, pytest, pytest-json-ctrf
   WARNING: The script pygmentize is installed in '/home/worker/.local/bin' which is not on PATH.
   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
@@ -23,7 +23,7 @@ FFF.F.....F..FFF....                                                     [100%]
 ______________________ test_c1_linear_baseline_is_removed ______________________
 
     def test_c1_linear_baseline_is_removed():
-        """Remove a sloped local baseline before measuring analyte area."""
+        """T01 题面「把前后两个基线点连成直线，作为整个积分窗口的基线…纵坐标是扣除该点线性基线后的信号」：线性基线必须被扣除，面积与两端基线值都要匹配独立实现。"""
         times = [float(index) for index in range(11)]
         signals = [2.0 + 0.5 * time for time in times]
         signals[5] += 3.0
@@ -41,7 +41,7 @@ E         Expected: 3.0 ± 3.0e-09
 ________________ test_c1_trapezoid_peak_area_matches_reference _________________
 
     def test_c1_trapezoid_peak_area_matches_reference():
-        """Match independent trapezoidal integration of a Gaussian peak."""
+        """T02 题面「面积用相邻采样点梯形法累加」：梯形积分面积和采样点数必须与独立实现一致。"""
         times = [36.0 + 0.1 * index for index in range(121)]
         signals = [
             1.1 + 0.013 * (time - 36.0)
@@ -62,7 +62,7 @@ E         Expected: 3.2485902240878586 ± 3.2e-09
 __________ test_c1_analyte_and_internal_standard_use_distinct_windows __________
 
     def test_c1_analyte_and_internal_standard_use_distinct_windows():
-        """Integrate the analyte and internal standard in separate windows."""
+        """T03 题面「乙酸乙酯的积分窗口为39.2至44.8秒…内标峰使用54.4至59.6秒的积分窗口」：两个峰必须用各自窗口积分，面积不同。"""
         times, signals = _load_trace("CAL-3")
         analyte = _reference_integrate(times, signals, ANALYTE_WINDOW)
         internal = _reference_integrate(times, signals, INTERNAL_STANDARD_WINDOW)
@@ -81,7 +81,7 @@ E         Expected: 1963.0597 ± 2.0e-07
 ______________________ test_c1_rejects_incomplete_window _______________________
 
     def test_c1_rejects_incomplete_window():
-        """Reject a trace missing the baseline anchors."""
+        """T05 题面「积分前锚点区间为36.4至38.0秒」：锚点区间采样不足时必须被拒绝。"""
 >       with pytest.raises(ValueError, match="time|point|window|trace"):
              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 E       Failed: DID NOT RAISE <class 'ValueError'>
@@ -90,7 +90,7 @@ E       Failed: DID NOT RAISE <class 'ValueError'>
 ______________ test_c3_dilution_and_blank_correction_are_applied _______________
 
     def test_c3_dilution_and_blank_correction_are_applied():
-        """Apply dilution and blank subtraction in the final concentration."""
+        """T11 题面「样品最终浓度等于 max(0, 仪器浓度*稀释倍数 - 空白校正值)」：稀释倍数和空白扣除必须同时生效。"""
         calibration = {"slope": 2.0, "intercept": 0.1}
         actual = corrected_concentration(1.1, 10.0, calibration, 0.2)
 >       assert actual == pytest.approx(4.8, rel=1e-9, abs=1e-12)
@@ -104,7 +104,7 @@ E         Expected: 4.8 ± 4.8e-09
 ______________________ test_c3_sample_status_propagation _______________________
 
     def test_c3_sample_status_propagation():
-        """Propagate sample failures into QC and overall release status."""
+        """T14 题面「低于LOQ为below_loq，平行样或加标不合格为qc_failed；任一qc_failed整批fail」：状态传播必须正确。"""
         calibration = {
             "slope": 1.0,
             "intercept": 0.0,
@@ -144,7 +144,7 @@ E       KeyError: 'samples'
 __________________ test_e2e_report_schema_and_summary_values ___________________
 
     def test_e2e_report_schema_and_summary_values():
-        """Emit a complete report with the expected sample decisions."""
+        """T15 题面「输出的根对象固定包含 calibration、blank_mean_mg_l、blank_correction_mg_l、qc、samples、overall_status」：报告字段和样例结论必须齐全。"""
         reference = _reference_report()
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "report.json"
@@ -181,7 +181,7 @@ E         + pass
 _____________ test_e2e_full_sequence_matches_independent_reference _____________
 
     def test_e2e_full_sequence_matches_independent_reference():
-        """Match independent calculations across the complete GC sequence."""
+        """T16 题面「把原始色谱和序列表整理成可以直接交给QA复核的JSON报告」：整条序列的校准、样品和状态必须与独立实现一致。"""
         expected = _reference_report()
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "report.json"
@@ -217,11 +217,11 @@ E         ...Full output truncated (3 lines hidden), use '-vv' to show
 /tests/test_outputs.py:542: AssertionError
 =============================== warnings summary ===============================
 ../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475
-  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-8djh9rqr'
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-acpkktur'
     config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
 
 ../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429
-  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-67rn0z0o'
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-kr_33bej'
     config.cache.set("cache/lastfailed", self.lastfailed)
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
@@ -234,6 +234,6 @@ FAILED ../tests/test_outputs.py::test_c3_dilution_and_blank_correction_are_appli
 FAILED ../tests/test_outputs.py::test_c3_sample_status_propagation - KeyError...
 FAILED ../tests/test_outputs.py::test_e2e_report_schema_and_summary_values - ...
 FAILED ../tests/test_outputs.py::test_e2e_full_sequence_matches_independent_reference
-8 failed, 12 passed, 2 warnings in 1.17s
+8 failed, 12 passed, 2 warnings in 0.77s
 reward=0.300000
 summary=tests=20 passed=12 failed=8

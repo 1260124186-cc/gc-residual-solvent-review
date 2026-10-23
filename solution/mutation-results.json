@@ -1,0 +1,74 @@
+{
+  "mutations": [
+    {
+      "id": "M1_no_baseline",
+      "description": "跳过线性基线扣除，直接用原始信号积分",
+      "expected_tests": [
+        "test_c1_linear_baseline_is_removed",
+        "test_c1_trapezoid_peak_area_matches_reference"
+      ],
+      "failed_tests": [
+        "test_c1_linear_baseline_is_removed",
+        "test_c1_trapezoid_peak_area_matches_reference",
+        "test_c1_analyte_and_internal_standard_use_distinct_windows",
+        "test_e2e_full_sequence_matches_independent_reference"
+      ],
+      "killed": true,
+      "evidence": "solution/evidence/mutation-M1_no_baseline.log"
+    },
+    {
+      "id": "M2_unweighted_fit",
+      "description": "把 1/x^2 权重退化成等权重",
+      "expected_tests": [
+        "test_c2_weighted_least_squares_parameters"
+      ],
+      "failed_tests": [
+        "test_c2_weighted_least_squares_parameters",
+        "test_c2_weighted_r2_uses_weighted_mean",
+        "test_c2_standard_recovery_acceptance_rules",
+        "test_c2_lod_and_loq_use_weighted_residual_error",
+        "test_e2e_full_sequence_matches_independent_reference"
+      ],
+      "killed": true,
+      "evidence": "solution/evidence/mutation-M2_unweighted_fit.log"
+    },
+    {
+      "id": "M3_wrong_loq",
+      "description": "把 LOQ 系数从 10 改成 3.3",
+      "expected_tests": [
+        "test_c2_lod_and_loq_use_weighted_residual_error"
+      ],
+      "failed_tests": [
+        "test_c2_lod_and_loq_use_weighted_residual_error",
+        "test_e2e_full_sequence_matches_independent_reference"
+      ],
+      "killed": true,
+      "evidence": "solution/evidence/mutation-M3_wrong_loq.log"
+    },
+    {
+      "id": "M4_no_blank_correction",
+      "description": "保留稀释倍数但跳过空白扣除",
+      "expected_tests": [
+        "test_c3_dilution_and_blank_correction_are_applied"
+      ],
+      "failed_tests": [
+        "test_c3_dilution_and_blank_correction_are_applied"
+      ],
+      "killed": true,
+      "evidence": "solution/evidence/mutation-M4_no_blank_correction.log"
+    },
+    {
+      "id": "M5_wrong_rpd_denominator",
+      "description": "RPD 分母从平行样均值改成总和",
+      "expected_tests": [
+        "test_c3_duplicate_rpd_boundary"
+      ],
+      "failed_tests": [
+        "test_c3_duplicate_rpd_boundary",
+        "test_e2e_full_sequence_matches_independent_reference"
+      ],
+      "killed": true,
+      "evidence": "solution/evidence/mutation-M5_wrong_rpd_denominator.log"
+    }
+  ]
+}

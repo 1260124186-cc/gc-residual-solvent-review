@@ -271,7 +271,7 @@ def _run_cli(sequence_path, chromatogram_path, output_path):
 
 
 def test_c1_linear_baseline_is_removed():
-    """Remove a sloped local baseline before measuring analyte area."""
+    """T01 题面「把前后两个基线点连成直线，作为整个积分窗口的基线…纵坐标是扣除该点线性基线后的信号」：线性基线必须被扣除，面积与两端基线值都要匹配独立实现。"""
     times = [float(index) for index in range(11)]
     signals = [2.0 + 0.5 * time for time in times]
     signals[5] += 3.0
@@ -288,7 +288,7 @@ def test_c1_linear_baseline_is_removed():
 
 
 def test_c1_trapezoid_peak_area_matches_reference():
-    """Match independent trapezoidal integration of a Gaussian peak."""
+    """T02 题面「面积用相邻采样点梯形法累加」：梯形积分面积和采样点数必须与独立实现一致。"""
     times = [36.0 + 0.1 * index for index in range(121)]
     signals = [
         1.1 + 0.013 * (time - 36.0)
@@ -303,7 +303,7 @@ def test_c1_trapezoid_peak_area_matches_reference():
 
 
 def test_c1_analyte_and_internal_standard_use_distinct_windows():
-    """Integrate the analyte and internal standard in separate windows."""
+    """T03 题面「乙酸乙酯的积分窗口为39.2至44.8秒…内标峰使用54.4至59.6秒的积分窗口」：两个峰必须用各自窗口积分，面积不同。"""
     times, signals = _load_trace("CAL-3")
     analyte = _reference_integrate(times, signals, ANALYTE_WINDOW)
     internal = _reference_integrate(times, signals, INTERNAL_STANDARD_WINDOW)
@@ -321,25 +321,25 @@ def test_c1_analyte_and_internal_standard_use_distinct_windows():
 
 
 def test_c1_rejects_nonmonotonic_trace():
-    """Reject an out-of-order time series."""
+    """T04 题面「同一进样的时间必须严格递增」：倒序时间轴必须被拒绝。"""
     with pytest.raises(ValueError, match="time|point|window|trace"):
         integrate_peak([0.0, 2.0, 1.0], [1.0, 1.0, 1.0], ANALYTE_WINDOW)
 
 
 def test_c1_rejects_incomplete_window():
-    """Reject a trace missing the baseline anchors."""
+    """T05 题面「积分前锚点区间为36.4至38.0秒」：锚点区间采样不足时必须被拒绝。"""
     with pytest.raises(ValueError, match="time|point|window|trace"):
         integrate_peak([39.5, 40.0, 41.0], [1.0, 1.0, 1.0], ANALYTE_WINDOW)
 
 
 def test_c1_rejects_single_point():
-    """Reject a trace containing only one sample."""
+    """T06 题面「面积用相邻采样点梯形法累加」：单点轨迹无法积分，必须被拒绝。"""
     with pytest.raises(ValueError, match="time|point|window|trace"):
         integrate_peak([39.2], [1.0], ANALYTE_WINDOW)
 
 
 def test_c2_weighted_least_squares_parameters():
-    """Calculate the independent 1/x-squared weighted line parameters."""
+    """T07 题面「每个校准点的权重为 1/x^2…求加权最小二乘解」：斜率、截距必须与独立加权拟合一致。"""
     points = [
         {"nominal_mg_l": 1.0, "response_ratio": 0.734},
         {"nominal_mg_l": 2.0, "response_ratio": 1.428},
@@ -356,7 +356,7 @@ def test_c2_weighted_least_squares_parameters():
 
 
 def test_c2_weighted_r2_uses_weighted_mean():
-    """Use the weighted response mean when computing fit quality."""
+    """T08 题面「用同一组权重计算加权决定系数 R2」：R2必须用加权均值计算。"""
     points = [
         {"nominal_mg_l": 1.0, "response_ratio": 0.741},
         {"nominal_mg_l": 2.0, "response_ratio": 1.415},
@@ -372,7 +372,7 @@ def test_c2_weighted_r2_uses_weighted_mean():
 
 
 def test_c2_standard_recovery_acceptance_rules():
-    """Apply the distinct low-standard and remaining-standard limits."""
+    """T09 题面「最低浓度允许80%至120%，其余浓度允许85%至115%」：最低点与其余点用不同回收率区间判定。"""
     points = [
         {"nominal_mg_l": 1.0, "response_ratio": 0.73},
         {"nominal_mg_l": 2.0, "response_ratio": 1.43},
@@ -398,7 +398,7 @@ def test_c2_standard_recovery_acceptance_rules():
 
 
 def test_c2_lod_and_loq_use_weighted_residual_error():
-    """Calculate detection limits from weighted residual error."""
+    """T10 题面「s_yx = sqrt(…)，LOD = 3.3*s_yx/b，LOQ = 10*s_yx/b」：sdyx、LOD、LOQ必须按加权残差标准误计算。"""
     points = [
         {"nominal_mg_l": 1.0, "response_ratio": 0.71},
         {"nominal_mg_l": 2.0, "response_ratio": 1.46},
@@ -418,7 +418,7 @@ def test_c2_lod_and_loq_use_weighted_residual_error():
 
 
 def test_c3_dilution_and_blank_correction_are_applied():
-    """Apply dilution and blank subtraction in the final concentration."""
+    """T11 题面「样品最终浓度等于 max(0, 仪器浓度*稀释倍数 - 空白校正值)」：稀释倍数和空白扣除必须同时生效。"""
     calibration = {"slope": 2.0, "intercept": 0.1}
     actual = corrected_concentration(1.1, 10.0, calibration, 0.2)
     assert actual == pytest.approx(4.8, rel=1e-9, abs=1e-12)
@@ -426,7 +426,7 @@ def test_c3_dilution_and_blank_correction_are_applied():
 
 
 def test_c3_duplicate_rpd_boundary():
-    """Calculate duplicate disagreement at and beyond the limit."""
+    """T12 题面「RPD=100*abs(c1-c2)/((c1+c2)/2)；两个浓度均为零时RPD记为0」：RPD公式和零值分支必须正确。"""
     values = [100.0, 110.5263157894737]
     assert relative_percent_difference(values) == pytest.approx(
         10.0, rel=1e-12, abs=1e-12
@@ -436,7 +436,7 @@ def test_c3_duplicate_rpd_boundary():
 
 
 def test_c3_spike_recovery_formula_and_boundaries():
-    """Check spike recovery at both acceptance boundaries."""
+    """T13 题面「加标回收率为 100*(加标样最终浓度-平行样平均浓度)/spike_added_mg_l」：回收率公式和80/120边界必须正确。"""
     assert spike_recovery_percent(18.0, 10.0, 10.0) == pytest.approx(
         80.0, rel=1e-9, abs=1e-12
     )
@@ -447,7 +447,7 @@ def test_c3_spike_recovery_formula_and_boundaries():
 
 
 def test_c3_sample_status_propagation():
-    """Propagate sample failures into QC and overall release status."""
+    """T14 题面「低于LOQ为below_loq，平行样或加标不合格为qc_failed；任一qc_failed整批fail」：状态传播必须正确。"""
     calibration = {
         "slope": 1.0,
         "intercept": 0.0,
@@ -487,7 +487,7 @@ def test_c3_sample_status_propagation():
 
 
 def test_e2e_report_schema_and_summary_values():
-    """Emit a complete report with the expected sample decisions."""
+    """T15 题面「输出的根对象固定包含 calibration、blank_mean_mg_l、blank_correction_mg_l、qc、samples、overall_status」：报告字段和样例结论必须齐全。"""
     reference = _reference_report()
     with tempfile.TemporaryDirectory() as directory:
         output = Path(directory) / "report.json"
@@ -518,7 +518,7 @@ def test_e2e_report_schema_and_summary_values():
 
 
 def test_e2e_full_sequence_matches_independent_reference():
-    """Match independent calculations across the complete GC sequence."""
+    """T16 题面「把原始色谱和序列表整理成可以直接交给QA复核的JSON报告」：整条序列的校准、样品和状态必须与独立实现一致。"""
     expected = _reference_report()
     with tempfile.TemporaryDirectory() as directory:
         output = Path(directory) / "report.json"
@@ -608,7 +608,7 @@ def _invalid_input_cases(root):
 
 
 def test_e2e_rejects_missing_column_without_report():
-    """Reject a missing sequence field without writing a report."""
+    """T17 题面「输入缺列…程序应以非零状态退出，不能生成报告」：缺列必须拒绝且不写半成品。"""
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         sequence_path, chromatogram_path = _invalid_input_cases(root)["missing-column"]
@@ -619,7 +619,7 @@ def test_e2e_rejects_missing_column_without_report():
 
 
 def test_e2e_rejects_non_numeric_field_without_report():
-    """Reject a nonnumeric sequence value without writing a report."""
+    """T18 题面「数值非有限…程序应以非零状态退出，不能生成报告」：非数值必须拒绝且不写半成品。"""
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         sequence_path, chromatogram_path = _invalid_input_cases(root)["non-numeric"]
@@ -630,7 +630,7 @@ def test_e2e_rejects_non_numeric_field_without_report():
 
 
 def test_e2e_rejects_duplicate_run_without_report():
-    """Reject a repeated injection ID without writing a report."""
+    """T19 题面「进样号在序列中必须唯一」：重复进样号必须拒绝且不写半成品。"""
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         sequence_path, chromatogram_path = _invalid_input_cases(root)["duplicate"]
@@ -641,7 +641,7 @@ def test_e2e_rejects_duplicate_run_without_report():
 
 
 def test_e2e_rejects_trace_mismatch_without_report():
-    """Reject unmatched chromatogram IDs without writing a report."""
+    """T20 题面「色谱与序列的进样号集合必须完全一致」：进样号不一致必须拒绝且不写半成品。"""
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
         sequence_path, chromatogram_path = _invalid_input_cases(root)["trace-mismatch"]

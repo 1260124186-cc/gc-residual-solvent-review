@@ -1,0 +1,98 @@
+Collecting pytest==8.4.1 (from -r /tests/requirements.txt (line 1))
+  Downloading pytest-8.4.1-py3-none-any.whl (365 kB)
+Collecting pytest-json-ctrf==0.3.5 (from -r /tests/requirements.txt (line 2))
+  Downloading pytest_json_ctrf-0.3.5-py3-none-any.whl (6.8 kB)
+Collecting iniconfig==2.3.1 (from -r /tests/requirements.txt (line 3))
+  Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+Collecting packaging==26.3 (from -r /tests/requirements.txt (line 4))
+  Downloading packaging-26.3-py3-none-any.whl (129 kB)
+Collecting pluggy==1.7.0 (from -r /tests/requirements.txt (line 5))
+  Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+Collecting pygments==2.21.0 (from -r /tests/requirements.txt (line 6))
+  Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 1.1 MB/s eta 0:00:00
+Installing collected packages: pygments, pluggy, packaging, iniconfig, pytest, pytest-json-ctrf
+Successfully installed iniconfig-2.3.1 packaging-26.3 pluggy-1.7.0 pygments-2.21.0 pytest-8.4.1 pytest-json-ctrf-0.3.5
+.........F.....F....                                                     [100%]
+=================================== FAILURES ===================================
+_______________ test_c2_lod_and_loq_use_weighted_residual_error ________________
+
+    def test_c2_lod_and_loq_use_weighted_residual_error():
+        """T10 题面「s_yx = sqrt(…)，LOD = 3.3*s_yx/b，LOQ = 10*s_yx/b」：sdyx、LOD、LOQ必须按加权残差标准误计算。"""
+        points = [
+            {"nominal_mg_l": 1.0, "response_ratio": 0.71},
+            {"nominal_mg_l": 2.0, "response_ratio": 1.46},
+            {"nominal_mg_l": 4.0, "response_ratio": 2.82},
+            {"nominal_mg_l": 8.0, "response_ratio": 5.68},
+            {"nominal_mg_l": 16.0, "response_ratio": 11.18},
+        ]
+        expected = _reference_calibration(points)
+        actual = weighted_calibration(points)
+        assert float(actual["sdyx"]) == pytest.approx(expected["sdyx"], rel=1e-9, abs=1e-12)
+        assert float(actual["lod_mg_l"]) == pytest.approx(
+            expected["lod_mg_l"], rel=1e-9, abs=1e-12
+        )
+>       assert float(actual["loq_mg_l"]) == pytest.approx(
+            expected["loq_mg_l"], rel=1e-9, abs=1e-12
+        )
+E       assert 0.0587214855852108 == 0.17794389571276 ± 1.8e-10
+E         
+E         comparison failed
+E         Obtained: 0.0587214855852108
+E         Expected: 0.17794389571276 ± 1.8e-10
+
+/tests/test_outputs.py:415: AssertionError
+_____________ test_e2e_full_sequence_matches_independent_reference _____________
+
+    def test_e2e_full_sequence_matches_independent_reference():
+        """T16 题面「把原始色谱和序列表整理成可以直接交给QA复核的JSON报告」：整条序列的校准、样品和状态必须与独立实现一致。"""
+        expected = _reference_report()
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "report.json"
+            process = _run_cli(DATA / "sequence.csv", DATA / "chromatograms.csv", output)
+            actual = json.loads(output.read_text(encoding="utf-8"))
+        assert process.returncode == 0
+        calibration_keys = (
+            "slope",
+            "intercept",
+            "weighted_r2",
+            "sdyx",
+            "lod_mg_l",
+            "loq_mg_l",
+        )
+        actual_calibration = {
+            key: float(actual["calibration"][key]) for key in calibration_keys
+        }
+        expected_calibration = {
+            key: expected["calibration"][key] for key in calibration_keys
+        }
+>       assert actual_calibration == pytest.approx(expected_calibration, rel=1e-8, abs=1e-12)
+E       AssertionError: assert {'intercept':...0575e-05, ...} == approx({'slop...56 ± 4.7e-12})
+E         
+E         comparison failed. Mismatched elements: 1 / 6:
+E         Max absolute difference: 0.0003167947929516443
+E         Max relative difference: 0.6700000000003586
+E         Index    | Obtained               | Expected                       
+E         loq_mg_l | 0.00015603325622966127 | 0.0004728280491813056 ± 4.7e-12
+
+/tests/test_outputs.py:542: AssertionError
+=============================== warnings summary ===============================
+../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-iy_airqi'
+    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+
+../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-0wh5xhc5'
+    config.cache.set("cache/lastfailed", self.lastfailed)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED ../tests/test_outputs.py::test_c2_lod_and_loq_use_weighted_residual_error
+FAILED ../tests/test_outputs.py::test_e2e_full_sequence_matches_independent_reference
+2 failed, 18 passed, 2 warnings in 0.78s
+
+--- stderr ---
+  WARNING: The script pygmentize is installed in '/home/worker/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts py.test and pytest are installed in '/home/worker/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.

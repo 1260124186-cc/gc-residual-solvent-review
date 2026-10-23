@@ -1,0 +1,110 @@
+Collecting pytest==8.4.1 (from -r /tests/requirements.txt (line 1))
+  Downloading pytest-8.4.1-py3-none-any.whl (365 kB)
+Collecting pytest-json-ctrf==0.3.5 (from -r /tests/requirements.txt (line 2))
+  Downloading pytest_json_ctrf-0.3.5-py3-none-any.whl (6.8 kB)
+Collecting iniconfig==2.3.1 (from -r /tests/requirements.txt (line 3))
+  Downloading iniconfig-2.3.1-py3-none-any.whl (7.6 kB)
+Collecting packaging==26.3 (from -r /tests/requirements.txt (line 4))
+  Downloading packaging-26.3-py3-none-any.whl (129 kB)
+Collecting pluggy==1.7.0 (from -r /tests/requirements.txt (line 5))
+  Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
+Collecting pygments==2.21.0 (from -r /tests/requirements.txt (line 6))
+  Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 505.9 kB/s eta 0:00:00
+Installing collected packages: pygments, pluggy, packaging, iniconfig, pytest, pytest-json-ctrf
+Successfully installed iniconfig-2.3.1 packaging-26.3 pluggy-1.7.0 pygments-2.21.0 pytest-8.4.1 pytest-json-ctrf-0.3.5
+...........F...F....                                                     [100%]
+=================================== FAILURES ===================================
+________________________ test_c3_duplicate_rpd_boundary ________________________
+
+    def test_c3_duplicate_rpd_boundary():
+        """T12 题面「RPD=100*abs(c1-c2)/((c1+c2)/2)；两个浓度均为零时RPD记为0」：RPD公式和零值分支必须正确。"""
+        values = [100.0, 110.5263157894737]
+>       assert relative_percent_difference(values) == pytest.approx(
+            10.0, rel=1e-12, abs=1e-12
+        )
+E       assert 5.000000000000007 == 10.0 ± 1.0e-11
+E         
+E         comparison failed
+E         Obtained: 5.000000000000007
+E         Expected: 10.0 ± 1.0e-11
+
+/tests/test_outputs.py:431: AssertionError
+_____________ test_e2e_full_sequence_matches_independent_reference _____________
+
+    def test_e2e_full_sequence_matches_independent_reference():
+        """T16 题面「把原始色谱和序列表整理成可以直接交给QA复核的JSON报告」：整条序列的校准、样品和状态必须与独立实现一致。"""
+        expected = _reference_report()
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "report.json"
+            process = _run_cli(DATA / "sequence.csv", DATA / "chromatograms.csv", output)
+            actual = json.loads(output.read_text(encoding="utf-8"))
+        assert process.returncode == 0
+        calibration_keys = (
+            "slope",
+            "intercept",
+            "weighted_r2",
+            "sdyx",
+            "lod_mg_l",
+            "loq_mg_l",
+        )
+        actual_calibration = {
+            key: float(actual["calibration"][key]) for key in calibration_keys
+        }
+        expected_calibration = {
+            key: expected["calibration"][key] for key in calibration_keys
+        }
+        assert actual_calibration == pytest.approx(expected_calibration, rel=1e-8, abs=1e-12)
+        assert actual["calibration"]["accepted"] == expected["calibration"]["accepted"]
+        standards = actual["calibration"]["standards"]
+        assert len(standards) == len(expected["calibration"]["recoveries"]) == 5
+        assert [float(item["nominal_mg_l"]) for item in standards] == pytest.approx(
+            [1.0, 2.0, 4.0, 8.0, 16.0]
+        )
+        assert [float(item["recovery_percent"]) for item in standards] == pytest.approx(
+            expected["calibration"]["recoveries"], rel=1e-8, abs=1e-12
+        )
+        assert set(actual["samples"]) == set(expected["samples"]) == {"S1", "S2"}
+        numeric_sample_keys = (
+            "concentration_mg_l", "duplicate_rpd_percent", "spike_recovery_percent"
+        )
+        actual_samples = {
+            (sample_id, key): float(actual["samples"][sample_id][key])
+            for sample_id in ("S1", "S2")
+            for key in numeric_sample_keys
+        }
+        expected_samples = {
+            (sample_id, key): expected["samples"][sample_id][key]
+            for sample_id in ("S1", "S2")
+            for key in numeric_sample_keys
+        }
+>       assert actual_samples == pytest.approx(expected_samples, rel=1e-8, abs=1e-12)
+E       AssertionError: assert {('S1', 'conc...l'): 0.0, ...} == approx({('S1'...69 ± 1.0e-06})
+E         
+E         comparison failed. Mismatched elements: 1 / 6:
+E         Max absolute difference: 1.0331414340707763
+E         Max relative difference: 0.4999999999999891
+E         Index                           | Obtained           | Expected                    
+E         ('S1', 'duplicate_rpd_percent') | 1.0331414340708212 | 2.0662828681415975 ± 2.1e-08
+
+/tests/test_outputs.py:566: AssertionError
+=============================== warnings summary ===============================
+../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-51gw4ovf'
+    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+
+../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-ha5wcw4z'
+    config.cache.set("cache/lastfailed", self.lastfailed)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED ../tests/test_outputs.py::test_c3_duplicate_rpd_boundary - assert 5.00...
+FAILED ../tests/test_outputs.py::test_e2e_full_sequence_matches_independent_reference
+2 failed, 18 passed, 2 warnings in 0.74s
+
+--- stderr ---
+  WARNING: The script pygmentize is installed in '/home/worker/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts py.test and pytest are installed in '/home/worker/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.

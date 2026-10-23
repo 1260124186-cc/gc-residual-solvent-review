@@ -1,4 +1,4 @@
-$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-c1.WTwxkd:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-partial-c1.QmEnZm:/logs harbor-gc-review-quality:85893 bash /tests/test.sh
+$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-c1.GySDKi:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-partial-c1.x7B74m:/logs harbor-gc-review-quality:71639 bash /tests/test.sh
 Collecting pytest==8.4.1 (from -r /tests/requirements.txt (line 1))
   Downloading pytest-8.4.1-py3-none-any.whl (365 kB)
 Collecting pytest-json-ctrf==0.3.5 (from -r /tests/requirements.txt (line 2))
@@ -11,7 +11,7 @@ Collecting pluggy==1.7.0 (from -r /tests/requirements.txt (line 5))
   Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
 Collecting pygments==2.21.0 (from -r /tests/requirements.txt (line 6))
   Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 646.0 kB/s eta 0:00:00
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 651.1 kB/s eta 0:00:00
 Installing collected packages: pygments, pluggy, packaging, iniconfig, pytest, pytest-json-ctrf
   WARNING: The script pygmentize is installed in '/home/worker/.local/bin' which is not on PATH.
   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
@@ -23,7 +23,7 @@ Successfully installed iniconfig-2.3.1 packaging-26.3 pluggy-1.7.0 pygments-2.21
 __________________ test_c2_weighted_least_squares_parameters ___________________
 
     def test_c2_weighted_least_squares_parameters():
-        """Calculate the independent 1/x-squared weighted line parameters."""
+        """T07 题面「每个校准点的权重为 1/x^2…求加权最小二乘解」：斜率、截距必须与独立加权拟合一致。"""
         points = [
             {"nominal_mg_l": 1.0, "response_ratio": 0.734},
             {"nominal_mg_l": 2.0, "response_ratio": 1.428},
@@ -44,7 +44,7 @@ E         Expected: 0.6998437499999999 ± 7.0e-10
 ____________________ test_c2_weighted_r2_uses_weighted_mean ____________________
 
     def test_c2_weighted_r2_uses_weighted_mean():
-        """Use the weighted response mean when computing fit quality."""
+        """T08 题面「用同一组权重计算加权决定系数 R2」：R2必须用加权均值计算。"""
         points = [
             {"nominal_mg_l": 1.0, "response_ratio": 0.741},
             {"nominal_mg_l": 2.0, "response_ratio": 1.415},
@@ -67,7 +67,7 @@ E         Expected: 0.9998803075397891 ± 1.0e-09
 __________________ test_c2_standard_recovery_acceptance_rules __________________
 
     def test_c2_standard_recovery_acceptance_rules():
-        """Apply the distinct low-standard and remaining-standard limits."""
+        """T09 题面「最低浓度允许80%至120%，其余浓度允许85%至115%」：最低点与其余点用不同回收率区间判定。"""
         points = [
             {"nominal_mg_l": 1.0, "response_ratio": 0.73},
             {"nominal_mg_l": 2.0, "response_ratio": 1.43},
@@ -88,7 +88,7 @@ E       assert True is False
 _______________ test_c2_lod_and_loq_use_weighted_residual_error ________________
 
     def test_c2_lod_and_loq_use_weighted_residual_error():
-        """Calculate detection limits from weighted residual error."""
+        """T10 题面「s_yx = sqrt(…)，LOD = 3.3*s_yx/b，LOQ = 10*s_yx/b」：sdyx、LOD、LOQ必须按加权残差标准误计算。"""
         points = [
             {"nominal_mg_l": 1.0, "response_ratio": 0.71},
             {"nominal_mg_l": 2.0, "response_ratio": 1.46},
@@ -109,7 +109,7 @@ E         Expected: 0.012569141216960683 ± 1.3e-11
 ______________ test_c3_dilution_and_blank_correction_are_applied _______________
 
     def test_c3_dilution_and_blank_correction_are_applied():
-        """Apply dilution and blank subtraction in the final concentration."""
+        """T11 题面「样品最终浓度等于 max(0, 仪器浓度*稀释倍数 - 空白校正值)」：稀释倍数和空白扣除必须同时生效。"""
         calibration = {"slope": 2.0, "intercept": 0.1}
         actual = corrected_concentration(1.1, 10.0, calibration, 0.2)
 >       assert actual == pytest.approx(4.8, rel=1e-9, abs=1e-12)
@@ -123,7 +123,7 @@ E         Expected: 4.8 ± 4.8e-09
 ______________________ test_c3_sample_status_propagation _______________________
 
     def test_c3_sample_status_propagation():
-        """Propagate sample failures into QC and overall release status."""
+        """T14 题面「低于LOQ为below_loq，平行样或加标不合格为qc_failed；任一qc_failed整批fail」：状态传播必须正确。"""
         calibration = {
             "slope": 1.0,
             "intercept": 0.0,
@@ -163,7 +163,7 @@ E       KeyError: 'samples'
 __________________ test_e2e_report_schema_and_summary_values ___________________
 
     def test_e2e_report_schema_and_summary_values():
-        """Emit a complete report with the expected sample decisions."""
+        """T15 题面「输出的根对象固定包含 calibration、blank_mean_mg_l、blank_correction_mg_l、qc、samples、overall_status」：报告字段和样例结论必须齐全。"""
         reference = _reference_report()
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "report.json"
@@ -200,7 +200,7 @@ E         + pass
 _____________ test_e2e_full_sequence_matches_independent_reference _____________
 
     def test_e2e_full_sequence_matches_independent_reference():
-        """Match independent calculations across the complete GC sequence."""
+        """T16 题面「把原始色谱和序列表整理成可以直接交给QA复核的JSON报告」：整条序列的校准、样品和状态必须与独立实现一致。"""
         expected = _reference_report()
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "report.json"
@@ -237,7 +237,7 @@ E         ...Full output truncated (3 lines hidden), use '-vv' to show
 ________________ test_e2e_rejects_duplicate_run_without_report _________________
 
     def test_e2e_rejects_duplicate_run_without_report():
-        """Reject a repeated injection ID without writing a report."""
+        """T19 题面「进样号在序列中必须唯一」：重复进样号必须拒绝且不写半成品。"""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             sequence_path, chromatogram_path = _invalid_input_cases(root)["duplicate"]
@@ -245,16 +245,16 @@ ________________ test_e2e_rejects_duplicate_run_without_report _________________
             process = _run_cli(sequence_path, chromatogram_path, output)
 >           assert process.returncode != 0
 E           AssertionError: assert 0 != 0
-E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmp3lc38dwo/duplicate.csv', '/workspace/data/chromatograms.csv', '/tmp/tmp3lc38dwo/report.json'], returncode=0, stdout='', stderr='').returncode
+E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmpl0s1j9jd/duplicate.csv', '/workspace/data/chromatograms.csv', '/tmp/tmpl0s1j9jd/report.json'], returncode=0, stdout='', stderr='').returncode
 
 /tests/test_outputs.py:639: AssertionError
 =============================== warnings summary ===============================
 ../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475
-  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-jslldkn7'
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-ejfthl3c'
     config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
 
 ../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429
-  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-9pfseymz'
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-jfk3zd4s'
     config.cache.set("cache/lastfailed", self.lastfailed)
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
@@ -268,6 +268,6 @@ FAILED ../tests/test_outputs.py::test_c3_sample_status_propagation - KeyError...
 FAILED ../tests/test_outputs.py::test_e2e_report_schema_and_summary_values - ...
 FAILED ../tests/test_outputs.py::test_e2e_full_sequence_matches_independent_reference
 FAILED ../tests/test_outputs.py::test_e2e_rejects_duplicate_run_without_report
-9 failed, 11 passed, 2 warnings in 0.86s
+9 failed, 11 passed, 2 warnings in 0.77s
 reward=0.300000
 summary=tests=20 passed=11 failed=9

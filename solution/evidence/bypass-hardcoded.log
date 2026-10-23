@@ -1,4 +1,4 @@
-$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-hardcoded.nwNgmU:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-bypass-hardcoded.TKzogL:/logs harbor-gc-review-quality:85893 bash /tests/test.sh
+$ docker run --rm -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-hardcoded.K4kQGd:/workspace -v /Users/zhangchengcheng/work/ai-project/Trea/harbor/gc-residual-solvent-review/tests:/tests:ro -v /var/folders/8t/8rw7_pg16cx2c2mkh_cvpz8m0000gn/T//gc-review-logs-bypass-hardcoded.MCHcnC:/logs harbor-gc-review-quality:71639 bash /tests/test.sh
 Collecting pytest==8.4.1 (from -r /tests/requirements.txt (line 1))
   Downloading pytest-8.4.1-py3-none-any.whl (365 kB)
 Collecting pytest-json-ctrf==0.3.5 (from -r /tests/requirements.txt (line 2))
@@ -11,7 +11,7 @@ Collecting pluggy==1.7.0 (from -r /tests/requirements.txt (line 5))
   Downloading pluggy-1.7.0-py3-none-any.whl (27 kB)
 Collecting pygments==2.21.0 (from -r /tests/requirements.txt (line 6))
   Downloading pygments-2.21.0-py3-none-any.whl (1.3 MB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 69.2 kB/s eta 0:00:00
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 692.3 kB/s eta 0:00:00
 Installing collected packages: pygments, pluggy, packaging, iniconfig, pytest, pytest-json-ctrf
   WARNING: The script pygmentize is installed in '/home/worker/.local/bin' which is not on PATH.
   Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
@@ -23,7 +23,7 @@ Successfully installed iniconfig-2.3.1 packaging-26.3 pluggy-1.7.0 pygments-2.21
 _____________ test_e2e_full_sequence_matches_independent_reference _____________
 
     def test_e2e_full_sequence_matches_independent_reference():
-        """Match independent calculations across the complete GC sequence."""
+        """T16 题面「把原始色谱和序列表整理成可以直接交给QA复核的JSON报告」：整条序列的校准、样品和状态必须与独立实现一致。"""
         expected = _reference_report()
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "report.json"
@@ -60,7 +60,7 @@ E         ...Full output truncated (4 lines hidden), use '-vv' to show
 ________________ test_e2e_rejects_missing_column_without_report ________________
 
     def test_e2e_rejects_missing_column_without_report():
-        """Reject a missing sequence field without writing a report."""
+        """T17 题面「输入缺列…程序应以非零状态退出，不能生成报告」：缺列必须拒绝且不写半成品。"""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             sequence_path, chromatogram_path = _invalid_input_cases(root)["missing-column"]
@@ -68,13 +68,13 @@ ________________ test_e2e_rejects_missing_column_without_report ________________
             process = _run_cli(sequence_path, chromatogram_path, output)
 >           assert process.returncode != 0
 E           AssertionError: assert 0 != 0
-E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmpwitgu3gn/missing.csv', '/workspace/data/chromatograms.csv', '/tmp/tmpwitgu3gn/report.json'], returncode=0, stdout='', stderr='').returncode
+E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmpwh2pe9aw/missing.csv', '/workspace/data/chromatograms.csv', '/tmp/tmpwh2pe9aw/report.json'], returncode=0, stdout='', stderr='').returncode
 
 /tests/test_outputs.py:617: AssertionError
 ______________ test_e2e_rejects_non_numeric_field_without_report _______________
 
     def test_e2e_rejects_non_numeric_field_without_report():
-        """Reject a nonnumeric sequence value without writing a report."""
+        """T18 题面「数值非有限…程序应以非零状态退出，不能生成报告」：非数值必须拒绝且不写半成品。"""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             sequence_path, chromatogram_path = _invalid_input_cases(root)["non-numeric"]
@@ -82,13 +82,13 @@ ______________ test_e2e_rejects_non_numeric_field_without_report _______________
             process = _run_cli(sequence_path, chromatogram_path, output)
 >           assert process.returncode != 0
 E           AssertionError: assert 0 != 0
-E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmp4jpdj7p1/bad_number.csv', '/workspace/data/chromatograms.csv', '/tmp/tmp4jpdj7p1/report.json'], returncode=0, stdout='', stderr='').returncode
+E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmp9gmaewnd/bad_number.csv', '/workspace/data/chromatograms.csv', '/tmp/tmp9gmaewnd/report.json'], returncode=0, stdout='', stderr='').returncode
 
 /tests/test_outputs.py:628: AssertionError
 ________________ test_e2e_rejects_duplicate_run_without_report _________________
 
     def test_e2e_rejects_duplicate_run_without_report():
-        """Reject a repeated injection ID without writing a report."""
+        """T19 题面「进样号在序列中必须唯一」：重复进样号必须拒绝且不写半成品。"""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             sequence_path, chromatogram_path = _invalid_input_cases(root)["duplicate"]
@@ -96,13 +96,13 @@ ________________ test_e2e_rejects_duplicate_run_without_report _________________
             process = _run_cli(sequence_path, chromatogram_path, output)
 >           assert process.returncode != 0
 E           AssertionError: assert 0 != 0
-E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmp9vmjufzi/duplicate.csv', '/workspace/data/chromatograms.csv', '/tmp/tmp9vmjufzi/report.json'], returncode=0, stdout='', stderr='').returncode
+E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmp3hh58m88/duplicate.csv', '/workspace/data/chromatograms.csv', '/tmp/tmp3hh58m88/report.json'], returncode=0, stdout='', stderr='').returncode
 
 /tests/test_outputs.py:639: AssertionError
 ________________ test_e2e_rejects_trace_mismatch_without_report ________________
 
     def test_e2e_rejects_trace_mismatch_without_report():
-        """Reject unmatched chromatogram IDs without writing a report."""
+        """T20 题面「色谱与序列的进样号集合必须完全一致」：进样号不一致必须拒绝且不写半成品。"""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             sequence_path, chromatogram_path = _invalid_input_cases(root)["trace-mismatch"]
@@ -110,16 +110,16 @@ ________________ test_e2e_rejects_trace_mismatch_without_report ________________
             process = _run_cli(sequence_path, chromatogram_path, output)
 >           assert process.returncode != 0
 E           AssertionError: assert 0 != 0
-E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmp2w88fgai/mismatch.csv', '/tmp/tmp2w88fgai/mismatch_chrom.csv', '/tmp/tmp2w88fgai/report.json'], returncode=0, stdout='', stderr='').returncode
+E            +  where 0 = CompletedProcess(args=['/usr/local/bin/python', '-m', 'gc_review.cli', '/tmp/tmp5b8rmqc6/mismatch.csv', '/tmp/tmp5b8rmqc6/mismatch_chrom.csv', '/tmp/tmp5b8rmqc6/report.json'], returncode=0, stdout='', stderr='').returncode
 
 /tests/test_outputs.py:650: AssertionError
 =============================== warnings summary ===============================
 ../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475
-  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-q4hx96wo'
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:475: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/nodeids: [Errno 30] Read-only file system: '/tests/pytest-cache-files-yeter5lf'
     config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
 
 ../home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429
-  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-waepjb43'
+  /home/worker/.local/lib/python3.12/site-packages/_pytest/cacheprovider.py:429: PytestCacheWarning: could not create cache path /tests/.pytest_cache/v/cache/lastfailed: [Errno 30] Read-only file system: '/tests/pytest-cache-files-kkwhx7u1'
     config.cache.set("cache/lastfailed", self.lastfailed)
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
@@ -129,6 +129,6 @@ FAILED ../tests/test_outputs.py::test_e2e_rejects_missing_column_without_report
 FAILED ../tests/test_outputs.py::test_e2e_rejects_non_numeric_field_without_report
 FAILED ../tests/test_outputs.py::test_e2e_rejects_duplicate_run_without_report
 FAILED ../tests/test_outputs.py::test_e2e_rejects_trace_mismatch_without_report
-5 failed, 15 passed, 2 warnings in 0.74s
+5 failed, 15 passed, 2 warnings in 0.48s
 reward=0.900000
 summary=tests=20 passed=15 failed=5
